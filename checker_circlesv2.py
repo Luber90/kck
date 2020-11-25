@@ -11,7 +11,7 @@ def inCircle(circles,point):
     return False
 
 def corners2():
-    img = cv.imread('checkersss.png')
+    img = cv.imread('boaard.png')
     width = len(img)
     heigth = len(img[0])
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
@@ -42,7 +42,7 @@ def corners2():
     cv.imwrite('dst.jpg', img)
 
 def corners():
-    img = cv.imread('checkersss.png')
+    img = cv.imread('boaard.png')
 
     cv.imshow('img', img)
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
@@ -64,7 +64,7 @@ def circles(a, b):
     delta = 0
     ddepth = cv.CV_16S
 
-    img = cv.imread('unknown.png')
+    img = cv.imread('boaard.png')
 
     #cv.imshow('img', img)
 
@@ -91,8 +91,8 @@ def circles(a, b):
             radius = i[2]
             cv.circle(img, center, radius, (255, 0, 255), 3)
 
-    cv.imshow('lol', img)
-    #cv.imwrite('result_{}_{}.jpg'.format(a, b), img)
+    #cv.imshow('lol', img)
+    cv.imwrite('result_{}_{}.jpg'.format(a, b), img)
 
 def forcheck():
     img = cv.imread('unknown.jpg')
@@ -105,6 +105,8 @@ def forcheck():
     gray = cv.equalizeHist(gray)
     cv.imshow('lol', gray)
 
-
-circles(50, 100)
-#corners()
+for i in range(30,90,5):
+    for j in range(30, 90, 5):
+        print(j,i)
+        circles(j,i)
+#circles(30,55)
