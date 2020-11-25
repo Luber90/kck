@@ -52,8 +52,8 @@ for i in range(lefttop[1], rightdown[1], wysokosc//8):
         break
     for j in range(lefttop[0], rightdown[0], szerokosc//8):
         if(countx == 8):
-            break
         if(gray[j+szerokosc//16][i+wysokosc//16]<100):
+            break
             pionki.append([j,i])
             plansza[countx][county] = 1
         countx += 1
