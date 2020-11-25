@@ -59,22 +59,27 @@ def corners():
     if cv.waitKey(0) & 0xff == 27:
         cv.destroyAllWindows()
 
-def circles():
+def circles(a, b):
     scale = 1
     delta = 0
     ddepth = cv.CV_16S
 
-    img = cv.imread('checkersss.png')
+    img = cv.imread('unknown.png')
 
-    cv.imshow('img', img)
+    #cv.imshow('img', img)
 
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-    gray = cv.medianBlur(gray, 5)
-    gray = cv.equalizeHist(gray)
+    #gray = cv.GaussianBlur(gray, (5,5),cv.BORDER_DEFAULT)
+    #gray = cv.equalizeHist(gray)
     rows = gray.shape[0]
-    circles = cv.HoughCircles(gray, cv.HOUGH_GRADIENT, 1, 120,
-                                   param1=275, param2=98,
-                                   minRadius=10, maxRadius=0)
+    kernel = np.ones((8,8),np.uint8)
+    gray = cv.morphologyEx(gray, cv.MORPH_OPEN, kernel)
+    gray = cv.GaussianBlur(gray, (5,5),cv.BORDER_DEFAULT)
+    gray = cv.equalizeHist(gray)
+    #cv.imshow('lol', gray)
+    circles = cv.HoughCircles(gray, cv.HOUGH_GRADIENT, 1, 110,
+                                   param1=a, param2=b,
+                                   minRadius=0, maxRadius=rows//8)
 
     #print(inCircle(circles,[415,415]))
 
@@ -87,9 +92,19 @@ def circles():
             cv.circle(img, center, radius, (255, 0, 255), 3)
 
     cv.imshow('lol', img)
+    #cv.imwrite('result_{}_{}.jpg'.format(a, b), img)
 
-    if cv.waitKey(0) & 0xff == 27:
-        cv.destroyAllWindows()
-#corners2()
-circles()
+def forcheck():
+    img = cv.imread('unknown.jpg')
+    gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+    #gray = cv.medianBlur(gray, 5)
+    #gray = cv.equalizeHist(gray)
+    rows = gray.shape[0]
+    kernel = np.ones((9,9),np.uint8)
+    gray = cv.morphologyEx(gray, cv.MORPH_OPEN, kernel)
+    gray = cv.equalizeHist(gray)
+    cv.imshow('lol', gray)
+
+
+circles(50, 100)
 #corners()

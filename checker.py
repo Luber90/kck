@@ -44,18 +44,18 @@ plansza=[[0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0]]
-county = 0;
-countx = 0;
+county = 0
+countx = 0
 pionki = []
 for i in range(lefttop[1], rightdown[1], wysokosc//8):
     if(county == 8):
-        break;
+        break
     for j in range(lefttop[0], rightdown[0], szerokosc//8):
         if(countx == 8):
-            break;
-        if(gray[j+szerokosc//16][i+wysokosc//16]<40):
+            break
+        if(gray[j+szerokosc//16][i+wysokosc//16]<100):
             pionki.append([j,i])
-            plansza[countx][county] = 1;
+            plansza[countx][county] = 1
         countx += 1
     countx=0
     county+=1
