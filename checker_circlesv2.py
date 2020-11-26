@@ -50,10 +50,11 @@ def corners2():
 
     return righttop, leftdown
 
-def corners():
-    img = cv.imread('boaard.png')
+def corners(image):
+    img = cv.imread(image)
 
     cv.imshow('img', img)
+
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
 
     gray = np.float32(gray)
@@ -64,6 +65,7 @@ def corners():
     img[dst > 0.01 * dst.max()] = [0, 0, 255]
 
     cv.imshow('dst', img)
+    cv.imwrite('tegotamtego.jpg', img)
 
     if cv.waitKey(0) & 0xff == 27:
         cv.destroyAllWindows()
@@ -125,13 +127,14 @@ def forcheck():
     gray = cv.equalizeHist(gray)
     cv.imshow('lol', gray)
 
-count = 0
-
-tr, bl = corners2()
-for i in range(30,200,5):
-    for j in range(30, 200, 5):
-        print(j,i)
-        circles(j,i,tr, bl)
-        count+=1
-print (count)
+# count = 0
+#
+# tr, bl = corners2()
+# for i in range(30,200,5):
+#     for j in range(30, 200, 5):
+#         print(j,i)
+#         circles(j,i,tr, bl)
+#         count+=1
+# print (count)
 #circles(30,55)
+corners('boarddd.jpg')

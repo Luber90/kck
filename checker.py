@@ -32,8 +32,8 @@ def circles(a, b):
                                    param1=a, param2=b,
                                    minRadius=0, maxRadius=rows//8)
 
-def checker():
-    img = cv.imread('boaard.png')
+def checker(image):
+    img = cv.imread(image)
     width = len(img)
     heigth = len(img[0])
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
@@ -105,4 +105,4 @@ def checker():
         print(i)
     cv.imwrite('dst.jpg', img)
 
-checker()
+checker('boarddd.jpg')
