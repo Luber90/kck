@@ -10,6 +10,13 @@ def inCircle(circles,point):
             return True
     return False
 
+def wrongCircles(circles,tr,bl):
+    dst = dist(tr,bl)
+    for i in circles[0]:
+        if i[2] > dst/16:
+            return True
+    return False
+
 def corners2():
     img = cv.imread('boaard.png')
     width = len(img)
@@ -41,6 +48,8 @@ def corners2():
     print(lefttop, righttop, leftdown, rightdown)
     cv.imwrite('dst.jpg', img)
 
+    return righttop, leftdown
+
 def corners():
     img = cv.imread('boaard.png')
 
@@ -59,7 +68,7 @@ def corners():
     if cv.waitKey(0) & 0xff == 27:
         cv.destroyAllWindows()
 
-def circles(a, b):
+def circles(a, b,tr, bl):
     scale = 1
     delta = 0
     ddepth = cv.CV_16S
@@ -80,6 +89,17 @@ def circles(a, b):
     circles = cv.HoughCircles(gray, cv.HOUGH_GRADIENT, 1, 110,
                                    param1=a, param2=b,
                                    minRadius=0, maxRadius=rows//8)
+
+    if (circles is None):
+        print("za mamło biongów")
+        return "za mamło biongów"
+    if (len(circles) > 24 ):
+        print("Dłumgość:", len(circles), "za dumżo biongów")
+        return "za dumżo biongów"
+    if (wrongCircles(circles,tr, bl) is True):
+        print("za dumże gółmka")
+        return "za dumże gółmka"
+
 
     #print(inCircle(circles,[415,415]))
 
@@ -105,8 +125,13 @@ def forcheck():
     gray = cv.equalizeHist(gray)
     cv.imshow('lol', gray)
 
-for i in range(30,90,5):
-    for j in range(30, 90, 5):
+count = 0
+
+tr, bl = corners2()
+for i in range(30,200,5):
+    for j in range(30, 200, 5):
         print(j,i)
-        circles(j,i)
+        circles(j,i,tr, bl)
+        count+=1
+print (count)
 #circles(30,55)
