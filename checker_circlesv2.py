@@ -10,7 +10,7 @@ def inCircle(circles,point):
             return True
     return False
 
-def wrongCircles(circles,tr,bl):
+def wrongCircles(circles,tr,bl): #odrzuca zdjęcia z wykrytymi kółkami różnych rozmiarów
     dst = dist(tr,bl)
     for i in circles[0]:
         if i[2] > dst/16:
@@ -58,7 +58,7 @@ def corners(image):
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
 
     gray = np.float32(gray)
-    dst = cv.cornerHarris(gray, 2, 3, 0.04)
+    dst = cv.cornerHarris(gray, 3, 3, 0.04)
 
     dst = cv.dilate(dst, None)
 
