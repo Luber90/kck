@@ -50,14 +50,14 @@ def corners2(img, plik):
                leftdown = [i, j]
             if(img[i][j][1]==255) and dist([width,heigth], rightdown) > dist([width,heigth], [i, j]):
                rightdown = [i, j]
-    lefttop[0] = int(lefttop[0]/width*width2)
-    lefttop[1] = int(lefttop[1] / heigth* heigth2)
-    righttop[0] = int(righttop[0] / width * width2)
-    righttop[1] = int(righttop[1] / heigth * heigth2)
-    leftdown[0] = int(leftdown[0] / width * width2)
-    leftdown[1] = int(leftdown[1] / heigth * heigth2)
-    rightdown[0] = int(rightdown[0] / width * width2)
-    rightdown[1] = int(rightdown[1] / heigth * heigth2)
+    lefttop[0] = int(lefttop[0]/(width-1)*(width2-1))
+    lefttop[1] = int(lefttop[1] / (width-1)*(width2-1))
+    righttop[0] = int(righttop[0] / (width-1)*(width2-1))
+    righttop[1] = int(righttop[1] / (width-1)*(width2-1))
+    leftdown[0] = int(leftdown[0] / (width-1)*(width2-1))
+    leftdown[1] = int(leftdown[1] / (width-1)*(width2-1))
+    rightdown[0] = int(rightdown[0] / (width-1)*(width2-1))
+    rightdown[1] = int(rightdown[1] / (width-1)*(width2-1))
     print(lefttop, righttop, leftdown, rightdown)
     cv.imwrite('dst.jpg', img)
 
@@ -147,7 +147,6 @@ def lines(name, a, b):
     #cv.imshow('l', blank_image)
     #cv.imwrite('lol2.jpg', src)
     return blank_image
-    cv.waitKey()
 
 def linepoints(img, line, gray):
     rho = line[0][0]
@@ -215,13 +214,24 @@ def final(name, circles, lefttop, righttop, leftdown, rightdown):
                 pionki.append([j, i])
                 # plansza[county][countx] = gray[j+szerokosc//16,i+wysokosc//16]
                 plansza[county][countx] = 1
-                cv.circle(img, (j + szerokosc // 16, i + wysokosc // 16), 3, (0, 100, 100), 3)
+                cv.circle(img, (j + szerokosc // 16, i + wysokosc // 16), 3, (0, 255, 0), 3)
             countx += 1
         countx = 0
         county += 1
     print(len(pionki))
     for i in plansza:
         print(i)
+    if circles is not None:
+        circles = np.uint16(np.around(circles))
+        for i in circles[0, :]:
+            center = (i[0], i[1])
+            cv.circle(img, center, 1, (0, 100, 100), 3)
+            radius = i[2]
+            cv.circle(img, center, radius, (0, 0, 255), 3)
+    cv.circle(img, tuple(righttop), 3, (0, 0, 255), 3)
+    cv.circle(img, tuple(rightdown), 3, (0, 0, 255), 3)
+    cv.circle(img, tuple(lefttop), 3, (0, 0, 255), 3)
+    cv.circle(img, tuple(leftdown), 3, (0, 0, 255), 3)
     cv.imwrite('final.jpg', img)
     cv.waitKey()
 
@@ -236,7 +246,7 @@ def final(name, circles, lefttop, righttop, leftdown, rightdown):
 # print (count)
 #circles(30,55)
 
-plik = 'boaard.png'
+plik = 'KOXimg.jpg'
 
 zdj = lines(plik, 50, 40)
 lefttop, righttop, leftdown, rightdown = corners2(zdj, plik)
