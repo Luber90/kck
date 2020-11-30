@@ -3,6 +3,29 @@ import cv2 as cv
 import math
 
 
+def minn(a, b):
+    if a <= b:
+        return a
+    else:
+        return b
+
+def rotate(origin, point, angle):
+    ox, oy = origin
+    px, py = point
+
+    qx = ox + math.cos(angle) * (px - ox) - math.sin(angle) * (py - oy)
+    qy = oy + math.sin(angle) * (px - ox) + math.cos(angle) * (py - oy)
+    return int(qx), int(qy)
+
+def minus(b, a):
+    return [b[0]-a[0], b[1]-a[1]]
+
+def addd(a, b):
+    return [a[0]+b[0], a[1]+b[1]]
+
+def mul(a, b):
+    return [a[0]*b, a[1]*b]
+
 def dist(a, b):
     return ((b[0]-a[0])**2 + (b[1]-a[1])**2)**(1/2)
 
@@ -19,45 +42,55 @@ def wrongCircles(circles,tr,bl): #odrzuca zdjęcia z wykrytymi kółkami różny
             return True
     return False
 
-def corners2(img, plik):
+def corners2(img, plik, angle):
     img2 = cv.imread(plik)
-    width2 = len(img2)
-    heigth2 = len(img2[0])
+    heigth2 = len(img2)
+    width2 = len(img2[0])
     width = len(img)
     heigth = len(img[0])
-    #img = cv.resize(img, (width, heigth))
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+    gray = cv.medianBlur(gray, 5)
+    _, gray = cv.threshold(gray, 20, 255, cv.THRESH_BINARY)
+    kernel = np.ones((5, 5), np.uint8)
+    gray = cv.morphologyEx(gray, cv.MORPH_OPEN, kernel)
+    kernel = np.ones((2, 2), np.uint8)
+    gray = cv.erode(gray, kernel, iterations=4)
 
-    gray = np.float32(gray)
-    dst = cv.cornerHarris(gray, 2, 3, 0.04)
-
-    #dst = cv.dilate(dst, None)
-
-    img[dst > 0.01 * dst.max()] = [0, 255, 0]
-
-    lefttop = [width, heigth]
-    righttop = [0, heigth]
-    leftdown = [width, 0]
-    rightdown = [0,0]
-
-    for i in range(1, len(img)-1):
-        for j in range(1, len(img[i])-1):
-            if(img[i][j][1]==255) and dist([0,0], lefttop) > dist([0,0], [i, j]):
-                lefttop = [i, j]
-            if(img[i][j][1]==255) and dist([width,0], righttop) > dist([width,0], [i, j]):
-                righttop = [i, j]
-            if(img[i][j][1]==255) and dist([0,heigth], leftdown) > dist([0,heigth], [i, j]):
-               leftdown = [i, j]
-            if(img[i][j][1]==255) and dist([width,heigth], rightdown) > dist([width,heigth], [i, j]):
-               rightdown = [i, j]
+    img[gray==255] = (255,255,255)
+    center = [249, 249]
+    lefttop = rotate(center, [width, heigth], angle)
+    righttop = rotate(center, [0, heigth], angle)
+    leftdown = rotate(center, [width, 0], angle)
+    rightdown = rotate(center, [0,0], angle)
+    corner1 = rotate(center, [0,0], angle)
+    corner2 = rotate(center, [width, 0], angle)
+    corner3 = rotate(center, [0, heigth], angle)
+    corner4 = rotate(center, [width, heigth], angle)
+    for i in range(0, len(img)):
+        for j in range(0, len(img[i])):
+            #if(gray[i][j] == 255):
+                #cv.circle(gray, (j, i), 4, (100, 0, 0))
+            if(gray[i][j]==255) and dist(corner1, lefttop) > dist(corner1, [j, i]):
+                lefttop = [j, i]
+            if(gray[i][j]==255) and dist(corner2, righttop) > dist(corner2, [j, i]):
+                righttop = [j, i]
+            if(gray[i][j]==255) and dist(corner3, leftdown) > dist(corner3, [j, i]):
+               leftdown = [j, i]
+            if(gray[i][j]==255) and dist(corner4, rightdown) > dist(corner4, [j, i]):
+               rightdown = [j, i]
+    cv.circle(img, (lefttop[0], lefttop[1]), 4, (255, 0, 0), 2)
+    cv.circle(img, (rightdown[0], rightdown[1]), 4, (255, 0, 0), 2)
+    cv.circle(img, (righttop[0], righttop[1]), 4, (255, 0, 0), 2)
+    cv.circle(img, (leftdown[0], leftdown[1]), 4, (255, 0, 0), 2)
+    print(lefttop, righttop, leftdown, rightdown)
     lefttop[0] = int(lefttop[0]/(width-1)*(width2-1))
-    lefttop[1] = int(lefttop[1] / (width-1)*(width2-1))
-    righttop[0] = int(righttop[0] / (width-1)*(width2-1))
-    righttop[1] = int(righttop[1] / (width-1)*(width2-1))
+    lefttop[1] = int(lefttop[1] / (heigth-1)*(heigth2-1))
+    righttop[0] = int(righttop[0] / width*width2)
+    righttop[1] = int(righttop[1] / heigth*heigth2)
     leftdown[0] = int(leftdown[0] / (width-1)*(width2-1))
-    leftdown[1] = int(leftdown[1] / (width-1)*(width2-1))
+    leftdown[1] = int(leftdown[1] / (heigth-1)*(heigth2-1))
     rightdown[0] = int(rightdown[0] / (width-1)*(width2-1))
-    rightdown[1] = int(rightdown[1] / (width-1)*(width2-1))
+    rightdown[1] = int(rightdown[1] / (heigth-1)*(heigth2-1))
     print(lefttop, righttop, leftdown, rightdown)
     cv.imwrite('dst.jpg', img)
 
@@ -126,27 +159,26 @@ def lines(name, a, b):
                 chk += 1
         if chk == 0:
             strong_lines.append(i)
-
+    thetas = []
     blank_image = np.zeros((500, 500, 3), np.uint8)
     if strong_lines is not None:
         for i in range(0, len(strong_lines)):
             rho = strong_lines[i][0][0]
             theta = strong_lines[i][0][1]
+            if theta*(180/np.pi) > -45 and theta*(180/np.pi) < 45:
+                #print(theta*(180/np.pi))
+                thetas.append(theta)
             a = math.cos(theta)
             b = math.sin(theta)
             x0 = a * rho
             y0 = b * rho
             pt1 = (int(x0 + 1000 * (-b)), int(y0 + 1000 * (a)))
             pt2 = (int(x0 - 1000 * (-b)), int(y0 - 1000 * (a)))
-            avg, var, rozniceavg = linepoints(src, strong_lines[i], gray)
-            print(avg, var, rozniceavg)
-            if rozniceavg > 10:
-                cv.line(blank_image, pt1, pt2, (0, 0, 255), 1)
-    #linepoints(src, strong_lines[0], gray)
-    #cv.imwrite("trash.jpg", thresh1)
-    #cv.imshow('l', blank_image)
-    #cv.imwrite('lol2.jpg', src)
-    return blank_image
+            avg, var, rozniceavg, dista = linepoints(src, strong_lines[i], gray)
+            #print(dista)
+            if rozniceavg > 9:
+                cv.line(blank_image, pt1, pt2, (0, 0, 255), 2)
+    return blank_image, np.average(thetas)
 
 def linepoints(img, line, gray):
     rho = line[0][0]
@@ -157,10 +189,12 @@ def linepoints(img, line, gray):
     y0 = b * rho
     zbior = []
     roznice = []
+    dista = []
     for i in range(0, 520, 30):
         pt = (int(x0+i*(-b)), int(y0+i*a))
         if pt[0] < 500 and pt[0] > -1 and pt[1] < 500 and pt[1] > -1:
             zbior.append(gray[pt[0]][pt[1]])
+            dista.append(dist(pt, [249, 249]))
             if pt[0] + 5 < 500 and pt[0] - 5 > -1:
                 roznice.append(abs(int(gray[pt[0]+5][pt[1]]) - int(gray[pt[0]-5][pt[1]])))
             if pt[1] + 5 < 500 and pt[1] - 5 > -1:
@@ -170,12 +204,13 @@ def linepoints(img, line, gray):
         pt = (int(x0 + i * (-b)), int(y0 + i * a))
         if pt[0] < 500 and pt[0] > -1 and pt[1] < 500 and pt[1] > -1:
             zbior.append(gray[pt[0]][pt[1]])
+            dista.append(dist(pt, [249, 249]))
             if pt[0] + 5 < 500 and pt[0] - 5 > -1:
                 roznice.append(abs(int(gray[pt[0] + 5][pt[1]]) - int(gray[pt[0] - 5][pt[1]])))
             if pt[1] + 5 < 500 and pt[1] - 5 > -1:
                 roznice.append(abs(int(gray[pt[0]][pt[1] + 5]) - int(gray[pt[0]][pt[1] - 5])))
             #cv.circle(img, pt, 1, (255, 0, 255), 1)
-    return np.average(zbior), np.var(zbior), np.average(roznice)
+    return np.average(zbior), np.var(zbior), np.average(roznice), np.average(dista)
 
 def zoba(plik, a, b, c, d):
     src = cv.imread(plik)
@@ -189,10 +224,13 @@ def zoba(plik, a, b, c, d):
 
 def final(name, circles, lefttop, righttop, leftdown, rightdown):
     img = cv.imread(name)
-    #img = cv.resize(img, (500, 500))
-    szerokosc = rightdown[0] - lefttop[0]
-    wysokosc = rightdown[1] - lefttop[1]
-
+    prawov = [(righttop[0]-lefttop[0])//8,
+              (righttop[1]-lefttop[1])//8]
+    dolv = [(leftdown[0]-lefttop[0])//8,
+            (leftdown[1]-lefttop[1])//8]
+    tocenterv = [(rightdown[0]-lefttop[0])//16,
+                 (rightdown[1]-lefttop[1])//16]
+    print("tocenter", tocenterv)
     plansza = [[0, 0, 0, 0, 0, 0, 0, 0],
                [0, 0, 0, 0, 0, 0, 0, 0],
                [0, 0, 0, 0, 0, 0, 0, 0],
@@ -201,23 +239,19 @@ def final(name, circles, lefttop, righttop, leftdown, rightdown):
                [0, 0, 0, 0, 0, 0, 0, 0],
                [0, 0, 0, 0, 0, 0, 0, 0],
                [0, 0, 0, 0, 0, 0, 0, 0]]
-    county = 0
-    countx = 0
+
     pionki = []
-    for i in range(lefttop[1], rightdown[1], wysokosc // 8):
-        if (county == 8):
-            break
-        for j in range(lefttop[0], rightdown[0], szerokosc // 8):
-            if (countx == 8):
-                break
-            if (inCircle(circles, [j + szerokosc // 16, i + wysokosc // 16])):
+    for i in range(8):
+        for j in range(8):
+            #print(addd(lefttop, addd(mul(prawov, j), addd(mul(dolv, i), tocenterv))))
+            cv.line(img, tuple(addd(lefttop, addd(mul(prawov, j), mul(dolv, i)))),
+                    tuple(addd(addd(lefttop, addd(mul(prawov, j), mul(dolv, i))), prawov)), (255, 0, 0), 1)
+            cv.line(img, tuple(addd(lefttop, addd(mul(prawov, j), mul(dolv, i)))),
+                    tuple(addd(addd(lefttop, addd(mul(prawov, j), mul(dolv, i))), dolv)), (255, 0, 0), 1)
+            if inCircle(circles, addd(lefttop, addd(mul(prawov, j), addd(mul(dolv, i), tocenterv)))):
                 pionki.append([j, i])
-                # plansza[county][countx] = gray[j+szerokosc//16,i+wysokosc//16]
-                plansza[county][countx] = 1
-                cv.circle(img, (j + szerokosc // 16, i + wysokosc // 16), 3, (0, 255, 0), 3)
-            countx += 1
-        countx = 0
-        county += 1
+                plansza[j][i] = 1
+                cv.circle(img, tuple(addd(addd(addd(lefttop, tocenterv), mul(prawov, j)), mul(dolv, i))), 3, (0, 255, 0), 3)
     print(len(pionki))
     for i in plansza:
         print(i)
@@ -235,21 +269,12 @@ def final(name, circles, lefttop, righttop, leftdown, rightdown):
     cv.imwrite('final.jpg', img)
     cv.waitKey()
 
-# count = 0
-#
-# tr, bl = corners2()
-# for i in range(30,200,5):
-#     for j in range(30, 200, 5):
-#         print(j,i)
-#         circles(j,i,tr, bl)
-#         count+=1
-# print (count)
-#circles(30,55)
 
-plik = 'KOXimg.jpg'
 
-zdj = lines(plik, 50, 40)
-lefttop, righttop, leftdown, rightdown = corners2(zdj, plik)
+plik = 'ch6.jpg'
+
+zdj, angle = lines(plik, 50, 40)
+lefttop, righttop, leftdown, rightdown = corners2(zdj, plik, angle)
 #zoba(plik, lefttop, righttop, leftdown, rightdown)
 circless = circles(plik, 90, 30)
 final(plik, circless, lefttop, righttop, leftdown, rightdown)
