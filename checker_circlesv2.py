@@ -166,7 +166,7 @@ def circles2(image): # funkcja do znajdywania najodpowiedniejszego wykrywania k�
             # if np.var(varianceList) > 100: #filtracja -  zbyt różnorodne wielkości pionków
             #     continue
 
-            if np.var(varianceList) > rows/16: #filtracja -  zbyt różnorodne wielkości pionków
+            if np.var(varianceList) > rows/20: #filtracja -  zbyt różnorodne wielkości pionków
                 continue
 
             finalCircles.append(circlesArr[c][0])
@@ -202,12 +202,12 @@ def circles2(image): # funkcja do znajdywania najodpowiedniejszego wykrywania k�
     for i in range(len(finalPicturesRet)):
         if finalPicturesRet[i][2] == minVar:
             cv.imwrite('BestOfokDoomerFinale.jpg', finalPicturesRet[i][0])
-            return finalCirclesRet[i]
+            return [finalCirclesRet[i]]
 
     if finalPicturesRet[0][0] is not None:
-        return finalPicturesRet[0][0]
-    else:
         return finalPicturesRet[0]
+    else:
+        return finalPicturesRet[0][0]
     # cv.imshow('lol', img)
     # cv.waitKey()
 
@@ -359,16 +359,17 @@ def final(name, circles, lefttop, righttop, leftdown, rightdown):
     cv.waitKey()
 
 
-plik = 'ch6.jpg'
+plik = 'ch2.jpg'
 
 zdj, angle = lines(plik, 50, 40)
 lefttop, righttop, leftdown, rightdown = corners2(zdj, plik, angle)
 #zoba(plik, lefttop, righttop, leftdown, rightdown)
-circless = circles(plik, 90, 30)
+circless = circles2(plik)
+#circless = circles(plik, 90, 30)
 final(plik, circless, lefttop, righttop, leftdown, rightdown)
 
 
-# out = circles2("chck2.jpg")
+# out = circles2("chck4.jpg")
 
 # print(out)
 # print(len(out))
