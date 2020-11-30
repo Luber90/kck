@@ -51,13 +51,13 @@ def corners2(img, plik):
             if(img[i][j][1]==255) and dist([width,heigth], rightdown) > dist([width,heigth], [i, j]):
                rightdown = [i, j]
     lefttop[0] = int(lefttop[0]/(width-1)*(width2-1))
-    lefttop[1] = int(lefttop[1] / (width-1)*(width2-1))
+    lefttop[1] = int(lefttop[1] / (heigth-1)*(heigth2-1))
     righttop[0] = int(righttop[0] / (width-1)*(width2-1))
-    righttop[1] = int(righttop[1] / (width-1)*(width2-1))
+    righttop[1] = int(righttop[1] / (heigth-1)*(heigth2-1))
     leftdown[0] = int(leftdown[0] / (width-1)*(width2-1))
-    leftdown[1] = int(leftdown[1] / (width-1)*(width2-1))
+    leftdown[1] = int(leftdown[1] / (heigth-1)*(heigth2-1))
     rightdown[0] = int(rightdown[0] / (width-1)*(width2-1))
-    rightdown[1] = int(rightdown[1] / (width-1)*(width2-1))
+    rightdown[1] = int(rightdown[1] / (heigth-1)*(heigth2-1))
     print(lefttop, righttop, leftdown, rightdown)
     cv.imwrite('dst.jpg', img)
 
@@ -88,6 +88,47 @@ def circles(name, a, b):
     #cv.waitKey()
     img = cv.resize(img, (500, 500))
     cv.imwrite('result_{}_{}.jpg'.format(a, b), img)
+    return circles
+
+def circles2(image):
+    img = cv.imread(image)
+    # img = cv.resize(img, (500, 500))
+    gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+    rows = gray.shape[0]
+    kernel = np.ones((8, 8), np.uint8)
+    gray = cv.morphologyEx(gray, cv.MORPH_OPEN, kernel)
+    gray = cv.medianBlur(gray, 5)
+    gray = cv.equalizeHist(gray)
+
+
+
+    circlesArr = []
+    for i in range(20,150,10):
+        for j in range(20, 150, 10):
+            circlesArr.append(cv.HoughCircles(gray, cv.HOUGH_GRADIENT, 1, 110,
+                                      param1=i, param2=j,
+                                      minRadius=0, maxRadius=rows // 8))
+            print(i,j)
+    for c in range(len(circlesArr)):
+        if circlesArr[c] is not None:
+            circles = np.uint16(np.around(circlesArr[c]))
+
+            varianceList = []
+            imgCpy = img.copy()
+            for i in circles[0, :]:
+                center = (i[0], i[1])
+                cv.circle(imgCpy, center, 1, (0, 100, 100), 3)
+                radius = i[2]
+                varianceList.append(radius)
+                cv.circle(imgCpy, center, radius, (255, 0, 255), 3)
+
+            print(c, ' variance: ', np.var(varianceList))
+            imgCpy = cv.resize(imgCpy, (500, 500))
+            cv.imwrite('okDoomer{}.jpg'.format(c), imgCpy)
+
+
+    # cv.imshow('lol', img)
+    # cv.waitKey()
     return circles
 
 def forcheck():
@@ -246,12 +287,12 @@ def final(name, circles, lefttop, righttop, leftdown, rightdown):
 # print (count)
 #circles(30,55)
 
-plik = 'KOXimg.jpg'
+#plik = 'KOXimg.jpg'
+#
+# zdj = lines(plik, 50, 40)
+# lefttop, righttop, leftdown, rightdown = corners2(zdj, plik)
+# #zoba(plik, lefttop, righttop, leftdown, rightdown)
+#circless = circles(plik, 90, 30)
+# final(plik, circless, lefttop, righttop, leftdown, rightdown)
 
-zdj = lines(plik, 50, 40)
-lefttop, righttop, leftdown, rightdown = corners2(zdj, plik)
-#zoba(plik, lefttop, righttop, leftdown, rightdown)
-circless = circles(plik, 90, 30)
-final(plik, circless, lefttop, righttop, leftdown, rightdown)
-
-
+circles2('boaard.png')
