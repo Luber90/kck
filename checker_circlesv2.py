@@ -85,8 +85,8 @@ def corners2(img, plik, angle):
     print(lefttop, righttop, leftdown, rightdown)
     lefttop[0] = int(lefttop[0]/(width-1)*(width2-1))
     lefttop[1] = int(lefttop[1] / (heigth-1)*(heigth2-1))
-    righttop[0] = int(righttop[0] / width*width2)
-    righttop[1] = int(righttop[1] / heigth*heigth2)
+    righttop[0] = int(righttop[0] / (width-1)*(width2-1))
+    righttop[1] = int(righttop[1] / (heigth-1)*(heigth2-1))
     leftdown[0] = int(leftdown[0] / (width-1)*(width2-1))
     leftdown[1] = int(leftdown[1] / (heigth-1)*(heigth2-1))
     rightdown[0] = int(rightdown[0] / (width-1)*(width2-1))
@@ -122,6 +122,67 @@ def circles(name, a, b):
     img = cv.resize(img, (500, 500))
     cv.imwrite('result_{}_{}.jpg'.format(a, b), img)
     return circles
+
+def circles2(image): # funkcja do znajdywania najodpowiedniejszego wykrywania kółek
+    img = cv.imread(image)
+    # img = cv.resize(img, (500, 500))
+    gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+    rows = gray.shape[0]
+    kernel = np.ones((8, 8), np.uint8)
+    gray = cv.morphologyEx(gray, cv.MORPH_OPEN, kernel)
+    gray = cv.medianBlur(gray, 5)
+    gray = cv.equalizeHist(gray)
+
+
+
+    circlesArr = []
+    for i in range(20,150,10):
+        for j in range(20, 150, 10):
+            circlesArr.append(cv.HoughCircles(gray, cv.HOUGH_GRADIENT, 1, 110,
+                                      param1=i, param2=j,
+                                      minRadius=0, maxRadius=rows // 8))
+            print(i,j)
+
+    finalPictures = []
+    finalPicturesRet = []
+    for c in range(len(circlesArr)):
+        if circlesArr[c] is not None:
+
+            if len(circlesArr[c][0]) > 24: #filtracja -  za dużo pionków
+                continue
+
+            circles = np.uint16(np.around(circlesArr[c]))
+
+            varianceList = []
+            imgCpy = img.copy()
+            for i in circles[0, :]:
+                center = (i[0], i[1])
+                cv.circle(imgCpy, center, 1, (0, 100, 100), 3)
+                radius = i[2]
+                varianceList.append(radius)
+                cv.circle(imgCpy, center, radius, (255, 0, 255), 3)
+
+            if np.var(varianceList) > 100: #filtracja -  zbyt różnorodne wielkości pionków
+                continue
+
+            print(c, ' variance: ', np.var(varianceList))
+            imgCpy = cv.resize(imgCpy, (500, 500))
+            finalPictures.append([imgCpy, len(circlesArr[c][0])]) #obrazek i ilość kółek
+            finalPicturesRet.append(imgCpy)
+
+    maxCircles = 0
+    for i in finalPictures:
+        if i[1] >= maxCircles:
+            maxCircles = i[1]
+    print(maxCircles)
+    for i in range(len(finalPictures)):
+        if finalPictures[i][1] >= maxCircles:
+            cv.imwrite('okDoomerFinale{}.jpg'.format(i + 1000), finalPictures[i][0])
+
+    # cv.imshow('lol', img)
+    # cv.waitKey()
+    
+    return finalPicturesRet
 
 def forcheck():
     img = cv.imread('unknown.jpg')
@@ -270,7 +331,6 @@ def final(name, circles, lefttop, righttop, leftdown, rightdown):
     cv.waitKey()
 
 
-
 plik = 'ch6.jpg'
 
 zdj, angle = lines(plik, 50, 40)
@@ -278,5 +338,4 @@ lefttop, righttop, leftdown, rightdown = corners2(zdj, plik, angle)
 #zoba(plik, lefttop, righttop, leftdown, rightdown)
 circless = circles(plik, 90, 30)
 final(plik, circless, lefttop, righttop, leftdown, rightdown)
-
 
