@@ -90,7 +90,7 @@ def circles(name, a, b):
     cv.imwrite('result_{}_{}.jpg'.format(a, b), img)
     return circles
 
-def circles2(image):
+def circles2(image): # funkcja do znajdywania najodpowiedniejszego wykrywania kółek
     img = cv.imread(image)
     # img = cv.resize(img, (500, 500))
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
@@ -109,8 +109,15 @@ def circles2(image):
                                       param1=i, param2=j,
                                       minRadius=0, maxRadius=rows // 8))
             print(i,j)
+
+    finalPictures = []
+    finalPicturesRet = []
     for c in range(len(circlesArr)):
         if circlesArr[c] is not None:
+
+            if len(circlesArr[c][0]) > 24: #filtracja -  za dużo pionków
+                continue
+
             circles = np.uint16(np.around(circlesArr[c]))
 
             varianceList = []
@@ -122,14 +129,27 @@ def circles2(image):
                 varianceList.append(radius)
                 cv.circle(imgCpy, center, radius, (255, 0, 255), 3)
 
+            if np.var(varianceList) > 100: #filtracja -  zbyt różnorodne wielkości pionków
+                continue
+
             print(c, ' variance: ', np.var(varianceList))
             imgCpy = cv.resize(imgCpy, (500, 500))
-            cv.imwrite('okDoomer{}.jpg'.format(c), imgCpy)
+            finalPictures.append([imgCpy, len(circlesArr[c][0])]) #obrazek i ilość kółek
+            finalPicturesRet.append(imgCpy)
 
+    maxCircles = 0
+    for i in finalPictures:
+        if i[1] >= maxCircles:
+            maxCircles = i[1]
+    print(maxCircles)
+    for i in range(len(finalPictures)):
+        if finalPictures[i][1] >= maxCircles:
+            cv.imwrite('okDoomerFinale{}.jpg'.format(i + 1000), finalPictures[i][0])
 
     # cv.imshow('lol', img)
     # cv.waitKey()
-    return circles
+    
+    return finalPicturesRet
 
 def forcheck():
     img = cv.imread('unknown.jpg')
@@ -295,4 +315,4 @@ def final(name, circles, lefttop, righttop, leftdown, rightdown):
 #circless = circles(plik, 90, 30)
 # final(plik, circless, lefttop, righttop, leftdown, rightdown)
 
-circles2('boaard.png')
+print(circles2('checker1.jpg'))
