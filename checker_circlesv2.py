@@ -42,6 +42,8 @@ def wrongCircles(circles,tr,bl): #odrzuca zdjęcia z wykrytymi kółkami różny
     return False
 
 def corners2(img, plik, angle):
+    print("angle:", angle*(180/np.pi))
+    print("lefttop:")
     img2 = cv.imread(plik)
     heigth2 = len(img2)
     width2 = len(img2[0])
@@ -253,7 +255,7 @@ def lines(name, a, b):
         for i in range(0, len(strong_lines)):
             rho = strong_lines[i][0][0]
             theta = strong_lines[i][0][1]
-            if theta*(180/np.pi) > -45 and theta*(180/np.pi) < 90:
+            if theta*(180/np.pi) > -45 and theta*(180/np.pi) < 60:
                 #print(theta*(180/np.pi))
                 thetas.append(theta)
             a = math.cos(theta)
@@ -266,8 +268,6 @@ def lines(name, a, b):
             #print(dista)
             if rozniceavg > 9:
                 cv.line(blank_image, pt1, pt2, (0, 0, 255), 2)
-    cv.imshow('l', blank_image)
-    cv.waitKey()
     print(thetas)
     return blank_image, np.average(thetas)
 
@@ -362,7 +362,7 @@ def final(name, circles, lefttop, righttop, leftdown, rightdown):
 
 
 
-plik = 'ch9.jpg'
+plik = 'zdj/rsz_1ch9.jpg'
 
 
 zdj, angle = lines(plik, 50, 40)
@@ -372,8 +372,4 @@ circless = circles2(plik)
 #circless = circles(plik, 90, 30)
 final(plik, circless, lefttop, righttop, leftdown, rightdown)
 
-
-# out = circles2("chck4.jpg")
-
-# print(out)
 # print(len(out))
