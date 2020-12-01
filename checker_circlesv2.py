@@ -143,11 +143,12 @@ def circles2(image): # funkcja do znajdywania najodpowiedniejszego wykrywania k�
             print(i,j)
 
     finalPictures = []
-    finalPicturesRet = []
+    finalCircles = []
     for c in range(len(circlesArr)):
         if circlesArr[c] is not None:
 
             if len(circlesArr[c][0]) > 24: #filtracja -  za dużo pionków
+                #print('length' , len(circlesArr[c][0]))
                 continue
 
             circles = np.uint16(np.around(circlesArr[c]))
@@ -161,27 +162,54 @@ def circles2(image): # funkcja do znajdywania najodpowiedniejszego wykrywania k�
                 varianceList.append(radius)
                 cv.circle(imgCpy, center, radius, (255, 0, 255), 3)
 
-            if np.var(varianceList) > 100: #filtracja -  zbyt różnorodne wielkości pionków
+            # if np.var(varianceList) > 100: #filtracja -  zbyt różnorodne wielkości pionków
+            #     continue
+
+            if np.var(varianceList) > rows/20: #filtracja -  zbyt różnorodne wielkości pionków
                 continue
 
-            print(c, ' variance: ', np.var(varianceList))
-            imgCpy = cv.resize(imgCpy, (500, 500))
-            finalPictures.append([imgCpy, len(circlesArr[c][0])]) #obrazek i ilość kółek
-            finalPicturesRet.append(imgCpy)
+            finalCircles.append(circlesArr[c][0])
+            #print(circlesArr[c][0])
 
+            print(c, ' variance: ', np.var(varianceList))
+            #imgCpy = cv.resize(imgCpy, (500, 500))
+            finalPictures.append([imgCpy, len(circlesArr[c][0]), int(np.var(varianceList))]) #obrazek i ilość kółek
+
+    finalCirclesRet = []
+    finalPicturesRet = []
     maxCircles = 0
-    for i in finalPictures:
-        if i[1] >= maxCircles:
-            maxCircles = i[1]
+    # pozbywanie się wyników z mniejszą ilością kółek niż max
+    for i in range(len(finalPictures)):
+        if finalPictures[i][1] >= maxCircles:
+            maxCircles = finalPictures[i][1]
     print(maxCircles)
+
     for i in range(len(finalPictures)):
         if finalPictures[i][1] >= maxCircles:
             cv.imwrite('okDoomerFinale{}.jpg'.format(i + 1000), finalPictures[i][0])
+            finalCirclesRet.append(finalCircles[i])
+            finalPicturesRet.append(finalPictures[i])
 
+
+    # szukanie zbioru kółek z najmniejszą wariancją
+    minVar = rows
+    for i in range(len(finalPicturesRet)):
+        if finalPicturesRet[i][2] <= minVar:
+            minVar = finalPicturesRet[i][2]
+    print(minVar)
+
+    for i in range(len(finalPicturesRet)):
+        if finalPicturesRet[i][2] == minVar:
+            cv.imwrite('BestOfokDoomerFinale.jpg', finalPicturesRet[i][0])
+            return [finalCirclesRet[i]]
+
+    if finalPicturesRet[0][0] is not None:
+        return finalPicturesRet[0]
+    else:
+        return finalPicturesRet[0][0]
     # cv.imshow('lol', img)
     # cv.waitKey()
-    
-    return finalPicturesRet
+
 
 def forcheck():
     img = cv.imread('unknown.jpg')
@@ -333,11 +361,19 @@ def final(name, circles, lefttop, righttop, leftdown, rightdown):
     cv.waitKey()
 
 
+
 plik = 'ch9.jpg'
+
 
 zdj, angle = lines(plik, 50, 40)
 lefttop, righttop, leftdown, rightdown = corners2(zdj, plik, angle)
 #zoba(plik, lefttop, righttop, leftdown, rightdown)
-circless = circles(plik, 90, 30)
+circless = circles2(plik)
+#circless = circles(plik, 90, 30)
 final(plik, circless, lefttop, righttop, leftdown, rightdown)
 
+
+# out = circles2("chck4.jpg")
+
+# print(out)
+# print(len(out))
