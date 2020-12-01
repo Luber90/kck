@@ -137,8 +137,8 @@ def circles2(image): # funkcja do znajdywania najodpowiedniejszego wykrywania k�
 
 
     circlesArr = []
-    for i in range(20,150,10):
-        for j in range(20, 150, 10):
+    for i in range(60,120,10):
+        for j in range(20, 60, 10):
             circlesArr.append(cv.HoughCircles(gray, cv.HOUGH_GRADIENT, 1, 110,
                                       param1=i, param2=j,
                                       minRadius=0, maxRadius=rows // 8))
@@ -150,9 +150,10 @@ def circles2(image): # funkcja do znajdywania najodpowiedniejszego wykrywania k�
         if circlesArr[c] is not None:
 
             if len(circlesArr[c][0]) > 24: #filtracja -  za dużo pionków
-                #print('length' , len(circlesArr[c][0]))
+                print('Wykryte kółka za dużo!: ' , len(circlesArr[c][0]))
                 continue
 
+            print('Wykryte kółka         : ', len(circlesArr[c][0]))
             circles = np.uint16(np.around(circlesArr[c]))
 
             varianceList = []
@@ -167,13 +168,13 @@ def circles2(image): # funkcja do znajdywania najodpowiedniejszego wykrywania k�
             # if np.var(varianceList) > 100: #filtracja -  zbyt różnorodne wielkości pionków
             #     continue
 
-            if np.var(varianceList) > rows/20: #filtracja -  zbyt różnorodne wielkości pionków
+            if np.std(varianceList) > rows/180: #filtracja -  zbyt różnorodne wielkości pionków
                 continue
 
             finalCircles.append(circlesArr[c][0])
             #print(circlesArr[c][0])
 
-            print(c, ' variance: ', np.var(varianceList))
+            print('Odchylenie            : ', np.std(varianceList))
             #imgCpy = cv.resize(imgCpy, (500, 500))
             finalPictures.append([imgCpy, len(circlesArr[c][0]), int(np.var(varianceList))]) #obrazek i ilość kółek
 
@@ -184,7 +185,7 @@ def circles2(image): # funkcja do znajdywania najodpowiedniejszego wykrywania k�
     for i in range(len(finalPictures)):
         if finalPictures[i][1] >= maxCircles:
             maxCircles = finalPictures[i][1]
-    print(maxCircles)
+    print('Znalezione kółka: ',maxCircles)
 
     for i in range(len(finalPictures)):
         if finalPictures[i][1] >= maxCircles:
@@ -198,17 +199,15 @@ def circles2(image): # funkcja do znajdywania najodpowiedniejszego wykrywania k�
     for i in range(len(finalPicturesRet)):
         if finalPicturesRet[i][2] <= minVar:
             minVar = finalPicturesRet[i][2]
-    print(minVar)
+    print("Wariancja: ",minVar)
 
     for i in range(len(finalPicturesRet)):
         if finalPicturesRet[i][2] == minVar:
             cv.imwrite('BestOfokDoomerFinale.jpg', finalPicturesRet[i][0])
             return [finalCirclesRet[i]]
 
-    if finalPicturesRet[0][0] is not None:
-        return finalPicturesRet[0]
-    else:
-        return finalPicturesRet[0][0]
+    print('NIE ZNALEZIONO SENSOWEJ INTERPRETACJI ZDJĘCIA')
+    return False
     # cv.imshow('lol', img)
     # cv.waitKey()
 
@@ -362,7 +361,7 @@ def final(name, circles, lefttop, righttop, leftdown, rightdown):
 
 
 
-plik = 'zdj/rsz_1ch9.jpg'
+plik = 'zdj/ch12.jpg'
 
 
 zdj, angle = lines(plik, 50, 40)
