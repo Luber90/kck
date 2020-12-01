@@ -2,6 +2,9 @@ import numpy as np
 import cv2 as cv
 import math
 
+def interpole(v, u, p1, p2, p3, p4): #np ile w prawo [0,1], nd ile w dol[0,1], v1 gorny wektro w prawo, v2 dolny wektor w prawo, v3 lewy wektor w dol itp
+    return (int((1-v)*((1-u)*p1[0]+u*p3[0])+v*((1-u)*p2[0]+u*p4[0])),
+            int((1-v)*((1-u)*p1[1]+u*p3[1])+v*((1-u)*p2[1]+u*p4[1])))
 
 def minn(a, b):
     if a <= b:
@@ -16,14 +19,14 @@ def rotate(origin, point, angle):
     qy = oy + math.sin(angle) * (px - ox) + math.cos(angle) * (py - oy)
     return int(qx), int(qy)
 
-def minus(b, a):
-    return [b[0]-a[0], b[1]-a[1]]
+#def minus(b, a):
+    #return [b[0]-a[0], b[1]-a[1]]
 
-def addd(a, b):
-    return [a[0]+b[0], a[1]+b[1]]
+#def addd(a, b):
+    #return [a[0]+b[0], a[1]+b[1]]
 
-def mul(a, b):
-    return [a[0]*b, a[1]*b]
+#def mul(a, b):
+    #return [a[0]*b, a[1]*b]
 
 def dist(a, b):
     return ((b[0]-a[0])**2 + (b[1]-a[1])**2)**(1/2)
@@ -314,13 +317,6 @@ def zoba(plik, a, b, c, d):
 
 def final(name, circles, lefttop, righttop, leftdown, rightdown):
     img = cv.imread(name)
-    prawov = [(righttop[0]-lefttop[0])//8,
-              (righttop[1]-lefttop[1])//8]
-    dolv = [(leftdown[0]-lefttop[0])//8,
-            (leftdown[1]-lefttop[1])//8]
-    tocenterv = [(rightdown[0]-lefttop[0])//16,
-                 (rightdown[1]-lefttop[1])//16]
-    print("tocenter", tocenterv)
     plansza = [[0, 0, 0, 0, 0, 0, 0, 0],
                [0, 0, 0, 0, 0, 0, 0, 0],
                [0, 0, 0, 0, 0, 0, 0, 0],
@@ -334,14 +330,14 @@ def final(name, circles, lefttop, righttop, leftdown, rightdown):
     for i in range(8):
         for j in range(8):
             #print(addd(lefttop, addd(mul(prawov, j), addd(mul(dolv, i), tocenterv))))
-            cv.line(img, tuple(addd(lefttop, addd(mul(prawov, j), mul(dolv, i)))),
-                    tuple(addd(addd(lefttop, addd(mul(prawov, j), mul(dolv, i))), prawov)), (255, 0, 0), 1)
-            cv.line(img, tuple(addd(lefttop, addd(mul(prawov, j), mul(dolv, i)))),
-                    tuple(addd(addd(lefttop, addd(mul(prawov, j), mul(dolv, i))), dolv)), (255, 0, 0), 1)
-            if inCircle(circles, addd(lefttop, addd(mul(prawov, j), addd(mul(dolv, i), tocenterv)))):
+            cv.line(img, interpole(i/8, j/8, lefttop, righttop, leftdown, rightdown),
+                    interpole(i/8+1/8, j/8, lefttop, righttop, leftdown, rightdown), (255, 0, 0), 1)
+            cv.line(img, interpole(i/8, j/8, lefttop, righttop, leftdown, rightdown),
+                    interpole(i/8, j/8+1/8, lefttop, righttop, leftdown, rightdown), (255, 0, 0), 1)
+            if inCircle(circles, interpole(i/8+1/16, j/8+1/16, lefttop, righttop, leftdown, rightdown)):
                 pionki.append([j, i])
                 plansza[j][i] = 1
-                cv.circle(img, tuple(addd(addd(addd(lefttop, tocenterv), mul(prawov, j)), mul(dolv, i))), 3, (0, 255, 0), 3)
+                cv.circle(img, interpole(i/8+1/16, j/8+1/16, lefttop, righttop, leftdown, rightdown), 3, (0, 255, 0), 3)
     print(len(pionki))
     for i in plansza:
         print(i)
@@ -361,15 +357,11 @@ def final(name, circles, lefttop, righttop, leftdown, rightdown):
 
 
 
-plik = 'zdj/ch16.jpg'
+plik = 'zdj/rsz_ch9.jpg'
 
 
 zdj, angle = lines(plik, 50, 40)
 lefttop, righttop, leftdown, rightdown = corners2(zdj, plik, angle)
 #zoba(plik, lefttop, righttop, leftdown, rightdown)
 circless = circles2(plik)
-#circless = circles(plik, 30, 120)
-#circless = circles(plik, 90, 30)
 final(plik, circless, lefttop, righttop, leftdown, rightdown)
-
-# print(len(out))
