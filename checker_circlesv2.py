@@ -2,10 +2,6 @@ import numpy as np
 import cv2 as cv
 import math
 
-def imageMultirescale(img): # zmniejsza o 3/4 zdjÄ™cie
-    img = cv.imread(img.format(i))
-    img = cv.resize(img, ((int(img.shape[1] * 1 / 2)), int(img.shape[0] * 1 / 2)))
-    cv.imwrite('zdj/inZdjjj{}.jpg'.format(i), img)
 
 def minn(a, b):
     if a <= b:
@@ -141,9 +137,8 @@ def circles2(image): # funkcja do znajdywania najodpowiedniejszego wykrywania kÃ
 
 
     circlesArr = []
-
     for i in range(30,120,10):
-        for j in range(20, 120, 5):
+        for j in range(20, 120, 10):
             circlesArr.append(cv.HoughCircles(gray, cv.HOUGH_GRADIENT, 1, 110,
                                       param1=i, param2=j,
                                       minRadius=0, maxRadius=rows // 8))
@@ -366,7 +361,7 @@ def final(name, circles, lefttop, righttop, leftdown, rightdown):
 
 
 
-plik = 'zdj/ch17.jpg'
+plik = 'zdj/ch16.jpg'
 
 
 zdj, angle = lines(plik, 50, 40)
@@ -377,6 +372,4 @@ circless = circles2(plik)
 #circless = circles(plik, 90, 30)
 final(plik, circless, lefttop, righttop, leftdown, rightdown)
 
-# # print(len(out))
-# for i in range(1,12):
-#     imageMultirescale('zdj/inZdj{}.jpg'.format(i))
+# print(len(out))
