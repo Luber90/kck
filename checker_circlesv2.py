@@ -406,11 +406,11 @@ def linijka(name, a, b):
             cv.line(src, pt1, pt2, (0, 0, 255), 2)
     cv.imshow('l', src)
     cv.waitKey()
-
+'''
 cunt = 0
 
 #plik = 'zdj/inZdjjj{}.jpg'.format(i)
-'''
+
 for DDD in range(12,42):
     cunt = DDD
     plik = 'zdj/inZdjjj{}.jpg'.format(DDD)
