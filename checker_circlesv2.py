@@ -138,32 +138,37 @@ def circles2(image): # funkcja do znajdywania najodpowiedniejszego wykrywania k�
     # img = cv.resize(img, (500, 500))
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     rows = gray.shape[0]
-    kernel = np.ones((8, 8), np.uint8)
-    # gray1 = cv.morphologyEx(gray, cv.MORPH_CLOSE, kernel)
-    gray2 = cv.morphologyEx(gray, cv.MORPH_OPEN, kernel)
-    # gray3 = cv.morphologyEx(gray, cv.MORPH_ERODE, kernel)
-    #gray = cv.Canny(gray,15,40) -- canny sie nie nadajae bo houghCircles to debil
-    #gray3 = cv.dilate(gray, kernel, borderType=cv.BORDER_CONSTANT) -- useless
-    #gray4 = cv.medianBlur(gray4, 5) -- szmata nie warto
-    #gray = cv.equalizeHist(gray) -- nie zgrywa sie z canny
-    #
+    kernel = np.ones((3, 3), np.uint8)
+    gray = cv.morphologyEx(gray, cv.MORPH_CLOSE, kernel, iterations=5)
+    gray = cv.equalizeHist(gray)  # -- nie zgrywa sie z canny
+
+    #gray = cv.morphologyEx(gray, cv.MORPH_CLOSE, kernel)
+    #gray = cv.morphologyEx(gray, cv.MORPH_OPEN, kernel)
+    # gray2 = cv.morphologyEx(gray, cv.MORPH_ERODE, kernel)
+    #gray = cv.Canny(gray,25,60) #-- canny sie nie nadajae bo houghCircles to debil
+    #gray = cv.dilate(gray, kernel, borderType=cv.BORDER_CONSTANT) #-- useless
+    #gray = cv.medianBlur(gray, 55) #-- szmata nie warto
+
     # cv.imshow('open',gray1)
-    gray2 = cv.resize(gray2, (700, 700))
-    cv.imshow('close{}'.format(DDD), gray2)
-
-    # cv.waitKey()
-    return False
-
+    # gray = cv.resize(gray, (700, 700))
+    #
+    # cv.imshow('close{}'.format(DDD), gray)
+    #
+    # #cv.waitKey()
+    # return False
+    parameters = []
     circlesArr = []
-    for i in range(30,110,10):
-        for j in range(20, 110, 10):
+    for i in range(45,90,2):
+        for j in range(25, 55, 2):
             circlesArr.append(cv.HoughCircles(gray, cv.HOUGH_GRADIENT, 1, 110,
                                       param1=i, param2=j,
                                       minRadius=0, maxRadius=rows // 8))
+            parameters.append([i,j])
             print(i,j)
 
     finalPictures = []
     finalCircles = []
+
     for c in range(len(circlesArr)):
         if circlesArr[c] is not None:
 
@@ -185,20 +190,21 @@ def circles2(image): # funkcja do znajdywania najodpowiedniejszego wykrywania k�
 
             # if np.var(varianceList) > 100: #filtracja -  zbyt różnorodne wielkości pionków
             #     continue
-
-            if np.std(varianceList) > rows/128: #filtracja -  zbyt różnorodne wielkości pionków
+            print('Odchylenie            : ', np.std(varianceList))
+            if np.std(varianceList) > rows/150: #filtracja -  zbyt różnorodne wielkości pionków
                 continue
 
             finalCircles.append(circlesArr[c][0])
             #print(circlesArr[c][0])
 
-            print('Odchylenie            : ', np.std(varianceList))
+
             #imgCpy = cv.resize(imgCpy, (500, 500))
-            finalPictures.append([imgCpy, len(circlesArr[c][0]), int(np.var(varianceList))]) #obrazek i ilość kółek
+            finalPictures.append([imgCpy, len(circlesArr[c][0]), int(np.var(varianceList)),parameters[c]]) #obrazek i ilość kółek
 
     finalCirclesRet = []
     finalPicturesRet = []
     maxCircles = 0
+    finalParam = []
     # pozbywanie się wyników z mniejszą ilością kółek niż max
     for i in range(len(finalPictures)):
         if finalPictures[i][1] >= maxCircles:
@@ -210,7 +216,9 @@ def circles2(image): # funkcja do znajdywania najodpowiedniejszego wykrywania k�
             cv.imwrite('okDoomerFinale{}.jpg'.format(i + 1000), finalPictures[i][0])
             finalCirclesRet.append(finalCircles[i])
             finalPicturesRet.append(finalPictures[i])
+            finalParam.append(finalPictures[i][3])
 
+    print('PARAMIETRY::::::::::::::::::::::::::::::: ->   ',finalParam)
 
     # szukanie zbioru kółek z najmniejszą wariancją
     minVar = rows
@@ -379,7 +387,7 @@ def final(name, circles, lefttop, righttop, leftdown, rightdown):
     cv.imwrite('final.jpg', img)
     # cv.imwrite('final{}.jpg'.format(str(cunt)+" close zamiast open"), img)
     # cv.imwrite('final{}.jpg'.format(str(cunt) + " morph gradient"), img)
-    cv.imwrite('final{}.jpg'.format(str(cunt) + " morph gradient"), img)
+    cv.imwrite('STOPfinal{}.jpg'.format(str(cunt) + " morph gradient"), img)
 
     cv.waitKey()
 
@@ -418,20 +426,23 @@ def linijka(name, a, b):
             cv.line(src, pt1, pt2, (0, 0, 255), 2)
     cv.imshow('l', src)
     cv.waitKey()
-'''
+
 cunt = 0
 
 #plik = 'zdj/inZdjjj{}.jpg'.format(i)
 
-for DDD in range(12,42):
+for DDD in range(46,48):
     cunt = DDD
     plik = 'zdj/inZdjjj{}.jpg'.format(DDD)
     print('ZDJ numero : ', DDD, '  :', plik, "<<<<<==================================================")
-    # zdj, angle = lines(plik, 50, 40)
-    # lefttop, righttop, leftdown, rightdown = corners2(zdj, plik, angle)
+    zdj, angle = lines(plik, 50, 40)
+    lefttop, righttop, leftdown, rightdown = corners2(zdj, plik, angle)
 
     circless = circles2(plik)
-    # final(plik, circless, lefttop, righttop, leftdown, rightdown)
+    if circless is False:
+        cunt += 1
+        continue
+    final(plik, circless, lefttop, righttop, leftdown, rightdown)
 
     cunt+=1
 cv.waitKey()
