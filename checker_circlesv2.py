@@ -41,8 +41,6 @@ def wrongCircles(circles,tr,bl): #odrzuca zdjęcia z wykrytymi kółkami różny
     return False
 
 def corners2(img, plik, angle):
-    #cv.imshow('XD',img)
-    cv.waitKey(0)
     print("angle:", angle*(180/np.pi))
     print("lefttop:")
     img2 = cv.imread(plik)
@@ -54,8 +52,7 @@ def corners2(img, plik, angle):
     gray = cv.medianBlur(gray, 5)
     _, gray = cv.threshold(gray, 20, 255, cv.THRESH_BINARY)
     kernel = np.ones((5, 5), np.uint8)
-    gray = cv.morphologyEx(gray, cv.MORPH_OPEN, kernel)
-
+    gray = cv.morphologyEx(gray, cv.MORPH_OPEN, kernel, iterations=1)
     #cv.imshow('XD', gray)
     cv.waitKey(0)
 
@@ -134,8 +131,13 @@ def circles(name, a, b):
     return circles
 
 def circles2(image): # funkcja do znajdywania najodpowiedniejszego wykrywania kółek
-    img = cv.imread(image)
-    # img = cv.resize(img, (500, 500))
+    src = cv.imread(image)
+    if src.shape[0] <= src.shape[1]:
+        proc = 800 / src.shape[0]
+    else:
+        proc = 800 / src.shape[1]
+    src = cv.resize(src, (int(proc * src.shape[1]), int(proc * src.shape[0])))
+    img = src
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     rows = gray.shape[0]
     kernel = np.ones((8, 8), np.uint8)
@@ -144,13 +146,12 @@ def circles2(image): # funkcja do znajdywania najodpowiedniejszego wykrywania k�
     gray = cv.equalizeHist(gray)
 
 
-
     circlesArr = []
-    for i in range(30,110,10):
-        for j in range(20, 110, 10):
+    for i in range(30,124,2):
+        for j in range(10, 110, 5):
             circlesArr.append(cv.HoughCircles(gray, cv.HOUGH_GRADIENT, 1, 110,
-                                      param1=i, param2=j,
-                                      minRadius=0, maxRadius=rows // 8))
+                              param1=i, param2=j,
+                              minRadius=rows // 32, maxRadius=rows // 8))
             print(i,j)
 
     finalPictures = []
@@ -158,7 +159,7 @@ def circles2(image): # funkcja do znajdywania najodpowiedniejszego wykrywania k�
     for c in range(len(circlesArr)):
         if circlesArr[c] is not None:
 
-            if len(circlesArr[c][0]) > 24: #filtracja -  za dużo pionków
+            if len(circlesArr[c][0]) > 26: #filtracja -  za dużo pionków
                 print('Wykryte kółka za dużo!: ' , len(circlesArr[c][0]))
                 continue
 
@@ -213,7 +214,10 @@ def circles2(image): # funkcja do znajdywania najodpowiedniejszego wykrywania k�
     for i in range(len(finalPicturesRet)):
         if finalPicturesRet[i][2] == minVar:
             cv.imwrite('BestOfokDoomerFinale.jpg', finalPicturesRet[i][0])
-            return [finalCirclesRet[i]]
+            final = [[i[0]/proc, i[1]/proc, i[2]/proc]for i in finalCirclesRet[i]]
+            print([finalCirclesRet[i]])
+            print(final)
+            return [final]
 
     print('NIE ZNALEZIONO SENSOWEJ INTERPRETACJI ZDJĘCIA')
     return False
@@ -246,6 +250,11 @@ def lines(name, a, b):
     better_lines = []
     d = 15
 
+    for i in lines:  # recalculating parameters for lines that have negative rho
+        if i[0][0] < 0:
+            i[0][0] *= -1.0
+            i[0][1] -= np.pi
+
     for i in lines:
         chk = 0
         if len(better_lines) == 0:
@@ -257,6 +266,7 @@ def lines(name, a, b):
                 chk += 1
         if chk == 0:
             better_lines.append(i)
+
 
     thetas = []
     blank_image = np.zeros((500, 500, 3), np.uint8)
@@ -270,7 +280,7 @@ def lines(name, a, b):
                 tmp += np.pi
             else:
                 tmp = theta
-            if tmp*(180/np.pi) >= 0 and tmp*(180/np.pi) < 85:
+            if tmp*(180/np.pi) >= -1.2 and tmp*(180/np.pi) < 85:
                 if theta < 0:
                     tmp = theta * -1.0
                     tmp -= np.pi
@@ -344,15 +354,15 @@ def final(name, circles, lefttop, righttop, leftdown, rightdown):
         for j in range(8):
             #print(addd(lefttop, addd(mul(prawov, j), addd(mul(dolv, i), tocenterv))))
             cv.line(img, interpole(i/8, j/8, lefttop, righttop, leftdown, rightdown),
-                    interpole(i/8+1/8, j/8, lefttop, righttop, leftdown, rightdown), (255, 0, 0), 1)
+                    interpole(i/8+1/8, j/8, lefttop, righttop, leftdown, rightdown), (255, 0, 0), 2)
             cv.line(img, interpole(i/8, j/8, lefttop, righttop, leftdown, rightdown),
-                    interpole(i/8, j/8+1/8, lefttop, righttop, leftdown, rightdown), (255, 0, 0), 1)
+                    interpole(i/8, j/8+1/8, lefttop, righttop, leftdown, rightdown), (255, 0, 0), 2)
             if inCircle(circles, interpole(i/8+1/16, j/8+1/16, lefttop, righttop, leftdown, rightdown)):
                 pionki.append([j, i])
                 plansza[j][i] = 1
                 cv.circle(img, interpole(i/8+1/16, j/8+1/16, lefttop, righttop, leftdown, rightdown), 3, (0, 255, 0), 3)
-    cv.line(img, tuple(leftdown), tuple(rightdown), (255, 0, 0), 1)
-    cv.line(img, tuple(rightdown), tuple(righttop),(255, 0, 0), 1)
+    cv.line(img, tuple(leftdown), tuple(rightdown), (255, 0, 0), 2)
+    cv.line(img, tuple(rightdown), tuple(righttop),(255, 0, 0), 2)
     print(len(pionki))
     for i in plansza:
         print(i)
@@ -368,8 +378,7 @@ def final(name, circles, lefttop, righttop, leftdown, rightdown):
     cv.circle(img, tuple(lefttop), 3, (0, 0, 255), 3)
     cv.circle(img, tuple(leftdown), 3, (0, 0, 255), 3)
     cv.imwrite('final.jpg', img)
-    cv.imwrite('final{}.jpg'.format(cunt), img)
-    cv.waitKey()
+
 
 def linijka(name, a, b):
     src = cv.imread(name)
@@ -406,28 +415,42 @@ def linijka(name, a, b):
             cv.line(src, pt1, pt2, (0, 0, 255), 2)
     cv.imshow('l', src)
     cv.waitKey()
-'''
-cunt = 0
 
-#plik = 'zdj/inZdjjj{}.jpg'.format(i)
+def koleczka(name, x, y):
+    src = cv.imread(name)
+    if src.shape[0] <= src.shape[1]:
+        proc = 800 / src.shape[0]
+    else:
+        proc = 800 / src.shape[1]
+    src = cv.resize(src, (int(proc*src.shape[1]), int(proc*src.shape[0])))
+    print(src.shape[0:2])
+    rows = src.shape[0]
+    src2 = np.copy(src)
+    src2 = cv.medianBlur(src2, 3)
+    gray = cv.cvtColor(src2, cv.COLOR_BGR2GRAY)
+    gray = cv.equalizeHist(gray)
+    kernel = np.ones((8, 8), np.uint8)
+    #gray = cv.morphologyEx(gray, cv.MORPH_CLOSE, kernel)
+    circles = cv.HoughCircles(gray, cv.HOUGH_GRADIENT, 1, 110,
+                                      param1=x, param2=y,
+                                      minRadius=rows//32, maxRadius= rows//8)
+    if circles is not None:
+        circles = np.uint16(np.around(circles))
+        for i in circles[0, :]:
+            center = (i[0], i[1])
+            cv.circle(src, center, 1, (0, 100, 100), 3)
+            radius = i[2]
+            cv.circle(src, center, radius, (255, 0, 255), 3)
+    cv.imshow("{}_{}.jpg".format(x, y), src)
+    cv.waitKey()
 
-for DDD in range(12,42):
-    cunt = DDD
-    plik = 'zdj/inZdjjj{}.jpg'.format(DDD)
-    print('ZDJ numero : ', DDD, '  :', plik, "<<<<<==================================================")
-    zdj, angle = lines(plik, 50, 40)
-    lefttop, righttop, leftdown, rightdown = corners2(zdj, plik, angle)
-    #zoba(plik, lefttop, righttop, leftdown, rightdown)
-    circless = circles2(plik)
-    final(plik, circless, lefttop, righttop, leftdown, rightdown)
 
-    cunt+=1
-'''
-plik = 'zdj/zch4.jpg'
+plik = 'zdj/chuj.jpg'
 
-#linijka(plik, 90, 200)
 zdj, angle = lines(plik, 90, 200)
 lefttop, righttop, leftdown, rightdown = corners2(zdj, plik, angle)
-#zoba(plik, lefttop, righttop, leftdown, rightdown)
 circless = circles2(plik)
 final(plik, circless, lefttop, righttop, leftdown, rightdown)
+
+
+
