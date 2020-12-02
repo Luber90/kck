@@ -5,7 +5,7 @@ import math
 def imageMultirescale(img): # zmniejsza o 3/4 zdjęcie
     img = cv.imread(img)
     img = cv.resize(img, ((int(img.shape[1] * 1 / 2)), int(img.shape[0] * 1 / 2)))
-    cv.imwrite('zdj/inZdjjj{}.jpg'.format(i), img)
+    cv.imwrite('zdj/inZdjjj.jpg', img)
 
 def interpole(v, u, p1, p2, p3, p4): #np ile w prawo [0,1], nd ile w dol[0,1], v1 gorny wektro w prawo, v2 dolny wektor w prawo, v3 lewy wektor w dol itp
     return (int((1-v)*((1-u)*p1[0]+u*p3[0])+v*((1-u)*p2[0]+u*p4[0])),
@@ -103,33 +103,6 @@ def corners2(img, plik, angle):
 
     return lefttop, righttop, leftdown, rightdown
 
-def circles(name, a, b):
-    img = cv.imread(name)
-    #img = cv.resize(img, (500, 500))
-    gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-    rows = gray.shape[0]
-    kernel = np.ones((8,8),np.uint8)
-    gray = cv.morphologyEx(gray, cv.MORPH_OPEN, kernel)
-    gray = cv.medianBlur(gray, 5)
-    gray = cv.equalizeHist(gray)
-    circles = cv.HoughCircles(gray, cv.HOUGH_GRADIENT, 1, 110,
-                                   param1=a, param2=b,
-                                   minRadius=0, maxRadius=rows//8)
-
-
-    if circles is not None:
-        circles = np.uint16(np.around(circles))
-        for i in circles[0, :]:
-            center = (i[0], i[1])
-            cv.circle(img, center, 1, (0, 100, 100), 3)
-            radius = i[2]
-            cv.circle(img, center, radius, (255, 0, 255), 3)
-    #cv.imshow('lol', img)
-    #cv.waitKey()
-    img = cv.resize(img, (500, 500))
-    cv.imwrite('result_{}_{}.jpg'.format(a, b), img)
-    return circles
-
 def circles2(image): # funkcja do znajdywania najodpowiedniejszego wykrywania kółek
     src = cv.imread(image)
     if src.shape[0] <= src.shape[1]:
@@ -140,22 +113,37 @@ def circles2(image): # funkcja do znajdywania najodpowiedniejszego wykrywania k�
     img = src
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     rows = gray.shape[0]
-    kernel = np.ones((8, 8), np.uint8)
-    gray = cv.morphologyEx(gray, cv.MORPH_OPEN, kernel)
-    gray = cv.medianBlur(gray, 5)
-    gray = cv.equalizeHist(gray)
+    kernel = np.ones((3, 3), np.uint8)
+    gray = cv.morphologyEx(gray, cv.MORPH_CLOSE, kernel, iterations=5)
+    gray = cv.equalizeHist(gray)  # -- nie zgrywa sie z canny
 
+    #gray = cv.morphologyEx(gray, cv.MORPH_CLOSE, kernel)
+    #gray = cv.morphologyEx(gray, cv.MORPH_OPEN, kernel)
+    # gray2 = cv.morphologyEx(gray, cv.MORPH_ERODE, kernel)
+    #gray = cv.Canny(gray,25,60) #-- canny sie nie nadajae bo houghCircles to debil
+    #gray = cv.dilate(gray, kernel, borderType=cv.BORDER_CONSTANT) #-- useless
+    #gray = cv.medianBlur(gray, 55) #-- szmata nie warto
 
+    # cv.imshow('open',gray1)
+    # gray = cv.resize(gray, (700, 700))
+    #
+    # cv.imshow('close{}'.format(DDD), gray)
+    #
+    # #cv.waitKey()
+    # return False
+    parameters = []
     circlesArr = []
-    for i in range(30,124,2):
-        for j in range(10, 110, 5):
+    for i in range(45,90,2):
+        for j in range(25, 55, 2):
             circlesArr.append(cv.HoughCircles(gray, cv.HOUGH_GRADIENT, 1, 110,
-                              param1=i, param2=j,
-                              minRadius=rows // 32, maxRadius=rows // 8))
+                                      param1=i, param2=j,
+                                      minRadius=0, maxRadius=rows // 8))
+            parameters.append([i,j])
             print(i,j)
 
     finalPictures = []
     finalCircles = []
+
     for c in range(len(circlesArr)):
         if circlesArr[c] is not None:
 
@@ -177,20 +165,21 @@ def circles2(image): # funkcja do znajdywania najodpowiedniejszego wykrywania k�
 
             # if np.var(varianceList) > 100: #filtracja -  zbyt różnorodne wielkości pionków
             #     continue
-
-            if np.std(varianceList) > rows/128: #filtracja -  zbyt różnorodne wielkości pionków
+            print('Odchylenie            : ', np.std(varianceList))
+            if np.std(varianceList) > rows/150: #filtracja -  zbyt różnorodne wielkości pionków
                 continue
 
             finalCircles.append(circlesArr[c][0])
             #print(circlesArr[c][0])
 
-            print('Odchylenie            : ', np.std(varianceList))
+
             #imgCpy = cv.resize(imgCpy, (500, 500))
-            finalPictures.append([imgCpy, len(circlesArr[c][0]), int(np.var(varianceList))]) #obrazek i ilość kółek
+            finalPictures.append([imgCpy, len(circlesArr[c][0]), int(np.var(varianceList)),parameters[c]]) #obrazek i ilość kółek
 
     finalCirclesRet = []
     finalPicturesRet = []
     maxCircles = 0
+    finalParam = []
     # pozbywanie się wyników z mniejszą ilością kółek niż max
     for i in range(len(finalPictures)):
         if finalPictures[i][1] >= maxCircles:
@@ -202,7 +191,9 @@ def circles2(image): # funkcja do znajdywania najodpowiedniejszego wykrywania k�
             cv.imwrite('okDoomerFinale{}.jpg'.format(i + 1000), finalPictures[i][0])
             finalCirclesRet.append(finalCircles[i])
             finalPicturesRet.append(finalPictures[i])
+            finalParam.append(finalPictures[i][3])
 
+    print('PARAMIETRY::::::::::::::::::::::::::::::: ->   ',finalParam)
 
     # szukanie zbioru kółek z najmniejszą wariancją
     minVar = rows
@@ -296,48 +287,6 @@ def lines(name, a, b):
             cv.line(blank_image, pt1, pt2, (0, 0, 255), 2)
     return blank_image, np.average(thetas)
 
-def linepoints(img, line, gray):
-    rho = line[0][0]
-    theta = line[0][1]
-    a = math.cos(theta)
-    b = math.sin(theta)
-    x0 = a * rho
-    y0 = b * rho
-    zbior = []
-    roznice = []
-    dista = []
-    for i in range(0, 520, 30):
-        pt = (int(x0+i*(-b)), int(y0+i*a))
-        if pt[0] < 500 and pt[0] > -1 and pt[1] < 500 and pt[1] > -1:
-            zbior.append(gray[pt[0]][pt[1]])
-            dista.append(dist(pt, [249, 249]))
-            if pt[0] + 5 < 500 and pt[0] - 5 > -1:
-                roznice.append(abs(int(gray[pt[0]+5][pt[1]]) - int(gray[pt[0]-5][pt[1]])))
-            if pt[1] + 5 < 500 and pt[1] - 5 > -1:
-                roznice.append(abs(int(gray[pt[0]][pt[1]+5]) - int(gray[pt[0]][pt[1]-5])))
-            #cv.circle(img, pt, 2, (255, 0, 255), 3)
-    for i in range(0, -520, -30):
-        pt = (int(x0 + i * (-b)), int(y0 + i * a))
-        if pt[0] < 500 and pt[0] > -1 and pt[1] < 500 and pt[1] > -1:
-            zbior.append(gray[pt[0]][pt[1]])
-            dista.append(dist(pt, [249, 249]))
-            if pt[0] + 5 < 500 and pt[0] - 5 > -1:
-                roznice.append(abs(int(gray[pt[0] + 5][pt[1]]) - int(gray[pt[0] - 5][pt[1]])))
-            if pt[1] + 5 < 500 and pt[1] - 5 > -1:
-                roznice.append(abs(int(gray[pt[0]][pt[1] + 5]) - int(gray[pt[0]][pt[1] - 5])))
-            #cv.circle(img, pt, 1, (255, 0, 255), 1)
-    return np.average(zbior), np.var(zbior), np.average(roznice), np.average(dista)
-
-def zoba(plik, a, b, c, d):
-    src = cv.imread(plik)
-    src = cv.resize(src, (500, 500))
-    cv.circle(src, tuple(a), 2, (255, 0, 255), 3)
-    cv.circle(src, tuple(b), 2, (255, 0, 255), 3)
-    cv.circle(src, tuple(c), 2, (255, 0, 255), 3)
-    cv.circle(src, tuple(d), 2, (255, 0, 255), 3)
-    cv.imshow("zoa", src)
-    cv.waitKey()
-
 def final(name, circles, lefttop, righttop, leftdown, rightdown):
     img = cv.imread(name)
     plansza = [[0, 0, 0, 0, 0, 0, 0, 0],
@@ -378,7 +327,11 @@ def final(name, circles, lefttop, righttop, leftdown, rightdown):
     cv.circle(img, tuple(lefttop), 3, (0, 0, 255), 3)
     cv.circle(img, tuple(leftdown), 3, (0, 0, 255), 3)
     cv.imwrite('final.jpg', img)
+    # cv.imwrite('final{}.jpg'.format(str(cunt)+" close zamiast open"), img)
+    # cv.imwrite('final{}.jpg'.format(str(cunt) + " morph gradient"), img)
+    cv.imwrite('STOPfinal{}.jpg'.format(str(cunt) + " morph gradient"), img)
 
+    cv.waitKey()
 
 def linijka(name, a, b):
     src = cv.imread(name)
@@ -416,41 +369,24 @@ def linijka(name, a, b):
     cv.imshow('l', src)
     cv.waitKey()
 
-def koleczka(name, x, y):
-    src = cv.imread(name)
-    if src.shape[0] <= src.shape[1]:
-        proc = 800 / src.shape[0]
-    else:
-        proc = 800 / src.shape[1]
-    src = cv.resize(src, (int(proc*src.shape[1]), int(proc*src.shape[0])))
-    print(src.shape[0:2])
-    rows = src.shape[0]
-    src2 = np.copy(src)
-    src2 = cv.medianBlur(src2, 3)
-    gray = cv.cvtColor(src2, cv.COLOR_BGR2GRAY)
-    gray = cv.equalizeHist(gray)
-    kernel = np.ones((8, 8), np.uint8)
-    #gray = cv.morphologyEx(gray, cv.MORPH_CLOSE, kernel)
-    circles = cv.HoughCircles(gray, cv.HOUGH_GRADIENT, 1, 110,
-                                      param1=x, param2=y,
-                                      minRadius=rows//32, maxRadius= rows//8)
-    if circles is not None:
-        circles = np.uint16(np.around(circles))
-        for i in circles[0, :]:
-            center = (i[0], i[1])
-            cv.circle(src, center, 1, (0, 100, 100), 3)
-            radius = i[2]
-            cv.circle(src, center, radius, (255, 0, 255), 3)
-    cv.imshow("{}_{}.jpg".format(x, y), src)
-    cv.waitKey()
+cunt = 0
 
+#plik = 'zdj/inZdjjj{}.jpg'.format(i)
 
-plik = 'zdj/chuj.jpg'
+for DDD in range(46,48):
+    cunt = DDD
+    plik = 'zdj/inZdjjj{}.jpg'.format(DDD)
+    print('ZDJ numero : ', DDD, '  :', plik, "<<<<<==================================================")
+    zdj, angle = lines(plik, 50, 40)
+    lefttop, righttop, leftdown, rightdown = corners2(zdj, plik, angle)
 
-zdj, angle = lines(plik, 90, 200)
-lefttop, righttop, leftdown, rightdown = corners2(zdj, plik, angle)
-circless = circles2(plik)
-final(plik, circless, lefttop, righttop, leftdown, rightdown)
+    circless = circles2(plik)
+    if circless is False:
+        cunt += 1
+        continue
+    final(plik, circless, lefttop, righttop, leftdown, rightdown)
 
+    cunt+=1
+cv.waitKey()
 
 
