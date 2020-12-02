@@ -140,8 +140,8 @@ def circles2(image): # funkcja do znajdywania najodpowiedniejszego wykrywania kÃ
 
 
     circlesArr = []
-    for i in range(30,120,10):
-        for j in range(20, 120, 10):
+    for i in range(10,130,2):
+        for j in range(10, 130, 2):
             circlesArr.append(cv.HoughCircles(gray, cv.HOUGH_GRADIENT, 1, 110,
                                       param1=i, param2=j,
                                       minRadius=0, maxRadius=rows // 8))
@@ -268,8 +268,8 @@ def lines(name, a, b):
             pt2 = (int(x0 - 1000 * (-b)), int(y0 - 1000 * (a)))
             avg, var, rozniceavg, dista = linepoints(src, strong_lines[i], gray)
             #print(dista)
-            if math.sqrt(var) > 3 and dista < 275:
-                cv.line(blank_image, pt1, pt2, (0, 0, 255), 2)
+            #if math.sqrt(var) > 3 and dista < 275:
+            cv.line(blank_image, pt1, pt2, (0, 0, 255), 2)
     print(thetas)
     return blank_image, np.average(thetas)
 
@@ -338,6 +338,8 @@ def final(name, circles, lefttop, righttop, leftdown, rightdown):
                 pionki.append([j, i])
                 plansza[j][i] = 1
                 cv.circle(img, interpole(i/8+1/16, j/8+1/16, lefttop, righttop, leftdown, rightdown), 3, (0, 255, 0), 3)
+    cv.line(img, tuple(leftdown), tuple(rightdown), (255, 0, 0), 1)
+    cv.line(img, tuple(rightdown), tuple(righttop),(255, 0, 0), 1)
     print(len(pionki))
     for i in plansza:
         print(i)
@@ -357,7 +359,7 @@ def final(name, circles, lefttop, righttop, leftdown, rightdown):
 
 
 
-plik = 'zdj/rsz_ch9.jpg'
+plik = 'zdj/niechdziala.jpg'
 
 
 zdj, angle = lines(plik, 50, 40)
