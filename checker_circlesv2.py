@@ -2,6 +2,11 @@ import numpy as np
 import cv2 as cv
 import math
 
+def imageMultirescale(img): # zmniejsza o 3/4 zdjęcie
+    img = cv.imread(img)
+    img = cv.resize(img, ((int(img.shape[1] * 1 / 2)), int(img.shape[0] * 1 / 2)))
+    cv.imwrite('zdj/inZdjjj{}.jpg'.format(i), img)
+
 def interpole(v, u, p1, p2, p3, p4): #np ile w prawo [0,1], nd ile w dol[0,1], v1 gorny wektro w prawo, v2 dolny wektor w prawo, v3 lewy wektor w dol itp
     return (int((1-v)*((1-u)*p1[0]+u*p3[0])+v*((1-u)*p2[0]+u*p4[0])),
             int((1-v)*((1-u)*p1[1]+u*p3[1])+v*((1-u)*p2[1]+u*p4[1])))
@@ -45,6 +50,8 @@ def wrongCircles(circles,tr,bl): #odrzuca zdjęcia z wykrytymi kółkami różny
     return False
 
 def corners2(img, plik, angle):
+    #cv.imshow('XD',img)
+    cv.waitKey(0)
     print("angle:", angle*(180/np.pi))
     print("lefttop:")
     img2 = cv.imread(plik)
@@ -57,8 +64,16 @@ def corners2(img, plik, angle):
     _, gray = cv.threshold(gray, 20, 255, cv.THRESH_BINARY)
     kernel = np.ones((5, 5), np.uint8)
     gray = cv.morphologyEx(gray, cv.MORPH_OPEN, kernel)
+
+    #cv.imshow('XD', gray)
+    cv.waitKey(0)
+
     kernel = np.ones((2, 2), np.uint8)
     gray = cv.erode(gray, kernel, iterations=4)
+
+    # cv.imshow('XD', gray)
+    # cv.imshow('XDDD', img2)
+    cv.waitKey(0)
 
     img[gray==255] = (255,255,255)
     center = [249, 249]
@@ -140,8 +155,8 @@ def circles2(image): # funkcja do znajdywania najodpowiedniejszego wykrywania k�
 
 
     circlesArr = []
-    for i in range(10,130,2):
-        for j in range(10, 130, 2):
+    for i in range(80,130,5):
+        for j in range(5, 65, 5):
             circlesArr.append(cv.HoughCircles(gray, cv.HOUGH_GRADIENT, 1, 110,
                                       param1=i, param2=j,
                                       minRadius=0, maxRadius=rows // 8))
@@ -171,7 +186,7 @@ def circles2(image): # funkcja do znajdywania najodpowiedniejszego wykrywania k�
             # if np.var(varianceList) > 100: #filtracja -  zbyt różnorodne wielkości pionków
             #     continue
 
-            if np.std(varianceList) > rows/180: #filtracja -  zbyt różnorodne wielkości pionków
+            if np.std(varianceList) > rows/128: #filtracja -  zbyt różnorodne wielkości pionków
                 continue
 
             finalCircles.append(circlesArr[c][0])
@@ -213,7 +228,6 @@ def circles2(image): # funkcja do znajdywania najodpowiedniejszego wykrywania k�
     return False
     # cv.imshow('lol', img)
     # cv.waitKey()
-
 
 def forcheck():
     img = cv.imread('unknown.jpg')
@@ -355,15 +369,27 @@ def final(name, circles, lefttop, righttop, leftdown, rightdown):
     cv.circle(img, tuple(lefttop), 3, (0, 0, 255), 3)
     cv.circle(img, tuple(leftdown), 3, (0, 0, 255), 3)
     cv.imwrite('final.jpg', img)
+    cv.imwrite('final{}.jpg'.format(cunt), img)
     cv.waitKey()
 
 
+cunt = 0
 
-plik = 'zdj/niechdziala.jpg'
+#plik = 'zdj/inZdjjj{}.jpg'.format(i)
+
+for DDD in range(12,42):
+    cunt = DDD
+    plik = 'zdj/inZdjjj{}.jpg'.format(DDD)
+    print('ZDJ numero : ', DDD, '  :', plik, "<<<<<==================================================")
+    zdj, angle = lines(plik, 50, 40)
+    lefttop, righttop, leftdown, rightdown = corners2(zdj, plik, angle)
+    #zoba(plik, lefttop, righttop, leftdown, rightdown)
+    circless = circles2(plik)
+    final(plik, circless, lefttop, righttop, leftdown, rightdown)
+
+    cunt+=1
 
 
-zdj, angle = lines(plik, 50, 40)
-lefttop, righttop, leftdown, rightdown = corners2(zdj, plik, angle)
-#zoba(plik, lefttop, righttop, leftdown, rightdown)
-circless = circles2(plik)
-final(plik, circless, lefttop, righttop, leftdown, rightdown)
+# for i in range(12,37):
+#     img = 'zdj/inZdjjj{}.jpg'.format(35)
+#     imageMultirescale(img)
