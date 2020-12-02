@@ -5,7 +5,7 @@ import math
 def imageMultirescale(img): # zmniejsza o 3/4 zdjÄ™cie
     img = cv.imread(img)
     img = cv.resize(img, ((int(img.shape[1] * 1 / 2)), int(img.shape[0] * 1 / 2)))
-    cv.imwrite('zdj/inZdjjj{}.jpg'.format(i), img)
+    cv.imwrite('zdj/inZdjjj.jpg', img)
 
 def interpole(v, u, p1, p2, p3, p4): #np ile w prawo [0,1], nd ile w dol[0,1], v1 gorny wektro w prawo, v2 dolny wektor w prawo, v3 lewy wektor w dol itp
     return (int((1-v)*((1-u)*p1[0]+u*p3[0])+v*((1-u)*p2[0]+u*p4[0])),
@@ -139,11 +139,20 @@ def circles2(image): # funkcja do znajdywania najodpowiedniejszego wykrywania kÃ
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     rows = gray.shape[0]
     kernel = np.ones((8, 8), np.uint8)
-    gray = cv.morphologyEx(gray, cv.MORPH_OPEN, kernel)
-    gray = cv.medianBlur(gray, 5)
-    gray = cv.equalizeHist(gray)
+    # gray1 = cv.morphologyEx(gray, cv.MORPH_CLOSE, kernel)
+    gray2 = cv.morphologyEx(gray, cv.MORPH_OPEN, kernel)
+    # gray3 = cv.morphologyEx(gray, cv.MORPH_ERODE, kernel)
+    #gray = cv.Canny(gray,15,40) -- canny sie nie nadajae bo houghCircles to debil
+    #gray3 = cv.dilate(gray, kernel, borderType=cv.BORDER_CONSTANT) -- useless
+    #gray4 = cv.medianBlur(gray4, 5) -- szmata nie warto
+    #gray = cv.equalizeHist(gray) -- nie zgrywa sie z canny
+    #
+    # cv.imshow('open',gray1)
+    gray2 = cv.resize(gray2, (700, 700))
+    cv.imshow('close{}'.format(DDD), gray2)
 
-
+    # cv.waitKey()
+    return False
 
     circlesArr = []
     for i in range(30,110,10):
@@ -368,7 +377,10 @@ def final(name, circles, lefttop, righttop, leftdown, rightdown):
     cv.circle(img, tuple(lefttop), 3, (0, 0, 255), 3)
     cv.circle(img, tuple(leftdown), 3, (0, 0, 255), 3)
     cv.imwrite('final.jpg', img)
-    cv.imwrite('final{}.jpg'.format(cunt), img)
+    # cv.imwrite('final{}.jpg'.format(str(cunt)+" close zamiast open"), img)
+    # cv.imwrite('final{}.jpg'.format(str(cunt) + " morph gradient"), img)
+    cv.imwrite('final{}.jpg'.format(str(cunt) + " morph gradient"), img)
+
     cv.waitKey()
 
 def linijka(name, a, b):
@@ -415,19 +427,15 @@ for DDD in range(12,42):
     cunt = DDD
     plik = 'zdj/inZdjjj{}.jpg'.format(DDD)
     print('ZDJ numero : ', DDD, '  :', plik, "<<<<<==================================================")
-    zdj, angle = lines(plik, 50, 40)
-    lefttop, righttop, leftdown, rightdown = corners2(zdj, plik, angle)
-    #zoba(plik, lefttop, righttop, leftdown, rightdown)
+    # zdj, angle = lines(plik, 50, 40)
+    # lefttop, righttop, leftdown, rightdown = corners2(zdj, plik, angle)
+
     circless = circles2(plik)
-    final(plik, circless, lefttop, righttop, leftdown, rightdown)
+    # final(plik, circless, lefttop, righttop, leftdown, rightdown)
 
     cunt+=1
-'''
-plik = 'zdj/zch4.jpg'
+cv.waitKey()
 
-#linijka(plik, 90, 200)
-zdj, angle = lines(plik, 90, 200)
-lefttop, righttop, leftdown, rightdown = corners2(zdj, plik, angle)
-#zoba(plik, lefttop, righttop, leftdown, rightdown)
-circless = circles2(plik)
-final(plik, circless, lefttop, righttop, leftdown, rightdown)
+# for i in range(12,37):
+#     img = 'zdj/inZdjjj{}.jpg'.format(35)
+#     imageMultirescale(img)
