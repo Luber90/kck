@@ -19,15 +19,6 @@ def rotate(origin, point, angle):
     qy = oy + math.sin(angle) * (px - ox) + math.cos(angle) * (py - oy)
     return int(qx), int(qy)
 
-#def minus(b, a):
-    #return [b[0]-a[0], b[1]-a[1]]
-
-#def addd(a, b):
-    #return [a[0]+b[0], a[1]+b[1]]
-
-#def mul(a, b):
-    #return [a[0]*b, a[1]*b]
-
 def dist(a, b):
     return ((b[0]-a[0])**2 + (b[1]-a[1])**2)**(1/2)
 
@@ -140,8 +131,8 @@ def circles2(image): # funkcja do znajdywania najodpowiedniejszego wykrywania k√
 
 
     circlesArr = []
-    for i in range(10,130,2):
-        for j in range(10, 130, 2):
+    for i in range(30,110,10):
+        for j in range(20, 110, 10):
             circlesArr.append(cv.HoughCircles(gray, cv.HOUGH_GRADIENT, 1, 110,
                                       param1=i, param2=j,
                                       minRadius=0, maxRadius=rows // 8))
@@ -214,7 +205,6 @@ def circles2(image): # funkcja do znajdywania najodpowiedniejszego wykrywania k√
     # cv.imshow('lol', img)
     # cv.waitKey()
 
-
 def forcheck():
     img = cv.imread('unknown.jpg')
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
@@ -231,46 +221,54 @@ def lines(name, a, b):
     src = cv.resize(src, (500, 500))
     gray = cv.cvtColor(src, cv.COLOR_BGR2GRAY)
     gray = cv.medianBlur(gray, 5)
-    dst = cv.Canny(src, a, b)
-    lines = cv.HoughLines(dst, 1, np.pi / 180, 150, None, 0, 0)
-    strong_lines = []
-    avg = 15
-    for i in lines:  # recalculating parameters for lines that have negative rho
-        if i[0][0] < 0:
-            i[0][0] *= -1.0
-            i[0][1] -= np.pi
+    _, gray = cv.threshold(gray, 90, 255, cv.THRESH_BINARY)
+    kernel = np.ones((3, 3), np.uint8)
+    gray = cv.dilate(gray, kernel, iterations=1)
+    kernel = np.ones((8, 8), np.uint8)
+    gray = cv.morphologyEx(gray, cv.MORPH_CLOSE, kernel)
+    dst = cv.Canny(gray, a, b)
+    lines = cv.HoughLines(dst, 1, np.pi / 180, 75, None, 0, 0)
+    better_lines = []
+    d = 15
 
-    for i in lines:  # finding four strong (that means they have the most points) and different lines
+    for i in lines:
         chk = 0
-        if len(strong_lines) == 0:
-            strong_lines.append(i)
+        if len(better_lines) == 0:
+            better_lines.append(i)
             continue
-        for j in strong_lines:
-            if (j[0][0] - avg <= i[0][0] <= j[0][0] + avg) and (
+        for j in better_lines:
+            if (j[0][0] - d <= i[0][0] <= j[0][0] + d) and (
                     j[0][1] - np.pi / 18 <= i[0][1] <= j[0][1] + np.pi / 18):
                 chk += 1
         if chk == 0:
-            strong_lines.append(i)
+            better_lines.append(i)
+
     thetas = []
     blank_image = np.zeros((500, 500, 3), np.uint8)
-    if strong_lines is not None:
-        for i in range(0, len(strong_lines)):
-            rho = strong_lines[i][0][0]
-            theta = strong_lines[i][0][1]
-            if theta*(180/np.pi) > -45 and theta*(180/np.pi) < 60:
-                #print(theta*(180/np.pi))
-                thetas.append(theta)
+    if better_lines is not None:
+        for i in range(0, len(better_lines)):
+            rho = better_lines[i][0][0]
+            theta = better_lines[i][0][1]
+            print(theta * (180 / np.pi))
+            if(theta*(180/np.pi) < -2.0):
+                tmp = theta
+                tmp += np.pi
+            else:
+                tmp = theta
+            if tmp*(180/np.pi) >= 0 and tmp*(180/np.pi) < 85:
+                if theta < 0:
+                    tmp = theta * -1.0
+                    tmp -= np.pi
+                    thetas.append(theta+np.pi)
+                else:
+                    thetas.append(theta)
             a = math.cos(theta)
             b = math.sin(theta)
             x0 = a * rho
             y0 = b * rho
             pt1 = (int(x0 + 1000 * (-b)), int(y0 + 1000 * (a)))
             pt2 = (int(x0 - 1000 * (-b)), int(y0 - 1000 * (a)))
-            avg, var, rozniceavg, dista = linepoints(src, strong_lines[i], gray)
-            #print(dista)
-            #if math.sqrt(var) > 3 and dista < 275:
             cv.line(blank_image, pt1, pt2, (0, 0, 255), 2)
-    print(thetas)
     return blank_image, np.average(thetas)
 
 def linepoints(img, line, gray):
@@ -358,11 +356,47 @@ def final(name, circles, lefttop, righttop, leftdown, rightdown):
     cv.waitKey()
 
 
+def linijka(name, a, b):
+    src = cv.imread(name)
+    src = cv.resize(src, (500, 500))
+    gray = cv.cvtColor(src, cv.COLOR_BGR2GRAY)
+    gray = cv.medianBlur(gray, 5)
+    _, gray = cv.threshold(gray, 90, 255, cv.THRESH_BINARY)
+    kernel = np.ones((3, 3), np.uint8)
+    gray = cv.dilate(gray, kernel, iterations=1)
+    kernel = np.ones((8,8), np.uint8)
+    gray = cv.morphologyEx(gray, cv.MORPH_CLOSE, kernel)
+    cv.imshow('l', gray)
+    cv.waitKey()
+    dst = cv.Canny(gray, a, b)
+    cv.imwrite("canny{}_{}.jpg".format(a, b), dst)
+    lines = cv.HoughLines(dst, 1, np.pi / 180, 75, None, 0, 0)
+    for i in lines:  # recalculating parameters for lines that have negative rho
+        if i[0][0] < 0:
+            i[0][0] *= -1.0
+            i[0][1] -= np.pi
+    if lines is not None:
+        for i in range(0, len(lines)):
+            rho = lines[i][0][0]
+            theta = lines[i][0][1]
+            a = math.cos(theta)
+            b = math.sin(theta)
+            x0 = a * rho
+            y0 = b * rho
+            pt1 = (int(x0 + 1000 * (-b)), int(y0 + 1000 * (a)))
+            pt2 = (int(x0 - 1000 * (-b)), int(y0 - 1000 * (a)))
+            avg, var, rozniceavg, dista = linepoints(src, lines[i], gray)
+            # print(dista)
+            # if math.sqrt(var) > 3 and dista < 275:
+            cv.line(src, pt1, pt2, (0, 0, 255), 2)
+    cv.imshow('l', src)
+    cv.waitKey()
 
-plik = 'zdj/niechdziala.jpg'
 
+plik = 'zdj/zch4.jpg'
 
-zdj, angle = lines(plik, 50, 40)
+#linijka(plik, 90, 200)
+zdj, angle = lines(plik, 90, 200)
 lefttop, righttop, leftdown, rightdown = corners2(zdj, plik, angle)
 #zoba(plik, lefttop, righttop, leftdown, rightdown)
 circless = circles2(plik)
