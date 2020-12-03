@@ -1,4 +1,6 @@
 *.jpg
 !zdj/*.jpg
+!result/*.jpg
 *.png
 !zdj/*.png
+!result/*.png

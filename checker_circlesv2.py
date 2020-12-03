@@ -49,18 +49,23 @@ def corners2(img, plik, angle):
     width = len(img)
     heigth = len(img[0])
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+    img1 = np.copy(gray)
     gray = cv.medianBlur(gray, 5)
     _, gray = cv.threshold(gray, 20, 255, cv.THRESH_BINARY)
     kernel = np.ones((5, 5), np.uint8)
     gray = cv.morphologyEx(gray, cv.MORPH_OPEN, kernel, iterations=1)
+    img2 = np.copy(gray)
     #cv.imshow('XD', gray)
     cv.waitKey(0)
 
     kernel = np.ones((2, 2), np.uint8)
     gray = cv.erode(gray, kernel, iterations=4)
-
+    img3 = np.copy(gray)
     # cv.imshow('XD', gray)
     # cv.imshow('XDDD', img2)
+    print(img1.shape, img2.shape)
+    res = cv.hconcat([img1, img2])
+    cv.imwrite("nokoniec.jpg", cv.hconcat([res, img3]))
     cv.waitKey(0)
 
     img[gray==255] = (255,255,255)
@@ -104,13 +109,7 @@ def corners2(img, plik, angle):
     return lefttop, righttop, leftdown, rightdown
 
 def circles2(image): # funkcja do znajdywania najodpowiedniejszego wykrywania kółek
-    src = cv.imread(image)
-    if src.shape[0] <= src.shape[1]:
-        proc = 800 / src.shape[0]
-    else:
-        proc = 800 / src.shape[1]
-    src = cv.resize(src, (int(proc * src.shape[1]), int(proc * src.shape[0])))
-    img = src
+    img = cv.imread(image)
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     rows = gray.shape[0]
     kernel = np.ones((3, 3), np.uint8)
@@ -133,8 +132,8 @@ def circles2(image): # funkcja do znajdywania najodpowiedniejszego wykrywania k�
     # return False
     parameters = []
     circlesArr = []
-    for i in range(45,90,2):
-        for j in range(25, 55, 2):
+    for i in range(50,110,5):
+        for j in range(25, 60, 2):
             circlesArr.append(cv.HoughCircles(gray, cv.HOUGH_GRADIENT, 1, 110,
                                       param1=i, param2=j,
                                       minRadius=0, maxRadius=rows // 8))
@@ -147,7 +146,7 @@ def circles2(image): # funkcja do znajdywania najodpowiedniejszego wykrywania k�
     for c in range(len(circlesArr)):
         if circlesArr[c] is not None:
 
-            if len(circlesArr[c][0]) > 26: #filtracja -  za dużo pionków
+            if len(circlesArr[c][0]) > 24: #filtracja -  za dużo pionków
                 print('Wykryte kółka za dużo!: ' , len(circlesArr[c][0]))
                 continue
 
@@ -205,10 +204,7 @@ def circles2(image): # funkcja do znajdywania najodpowiedniejszego wykrywania k�
     for i in range(len(finalPicturesRet)):
         if finalPicturesRet[i][2] == minVar:
             cv.imwrite('BestOfokDoomerFinale.jpg', finalPicturesRet[i][0])
-            final = [[i[0]/proc, i[1]/proc, i[2]/proc]for i in finalCirclesRet[i]]
-            print([finalCirclesRet[i]])
-            print(final)
-            return [final]
+            return [finalCirclesRet[i]]
 
     print('NIE ZNALEZIONO SENSOWEJ INTERPRETACJI ZDJĘCIA')
     return False
@@ -234,7 +230,7 @@ def lines(name, a, b):
     _, gray = cv.threshold(gray, 90, 255, cv.THRESH_BINARY)
     kernel = np.ones((3, 3), np.uint8)
     gray = cv.dilate(gray, kernel, iterations=1)
-    kernel = np.ones((8, 8), np.uint8)
+    kernel = np.ones((6, 6), np.uint8)
     gray = cv.morphologyEx(gray, cv.MORPH_CLOSE, kernel)
     dst = cv.Canny(gray, a, b)
     lines = cv.HoughLines(dst, 1, np.pi / 180, 75, None, 0, 0)
@@ -271,7 +267,7 @@ def lines(name, a, b):
                 tmp += np.pi
             else:
                 tmp = theta
-            if tmp*(180/np.pi) >= -1.2 and tmp*(180/np.pi) < 85:
+            if tmp*(180/np.pi) >= 0 and tmp*(180/np.pi) < 85:
                 if theta < 0:
                     tmp = theta * -1.0
                     tmp -= np.pi
@@ -326,23 +322,32 @@ def final(name, circles, lefttop, righttop, leftdown, rightdown):
     cv.circle(img, tuple(rightdown), 3, (0, 0, 255), 3)
     cv.circle(img, tuple(lefttop), 3, (0, 0, 255), 3)
     cv.circle(img, tuple(leftdown), 3, (0, 0, 255), 3)
-    cv.imwrite('final.jpg', img)
+    backupimg = cv.imread(name)
+    #img = cv.resize(img, (backupimg.shape[0]))
+    res = cv.hconcat([backupimg, img])
+    #cv.imshow("kurwaaa", res)
+    #cv.waitKey()
+    cv.imwrite('C:/Users/Luber/Desktop/kck/kck/result/final_{}'.format(name[4:]), res)
+    #cv.imwrite('final_{}'.format(name[4:]), res)
     # cv.imwrite('final{}.jpg'.format(str(cunt)+" close zamiast open"), img)
     # cv.imwrite('final{}.jpg'.format(str(cunt) + " morph gradient"), img)
-    cv.imwrite('STOPfinal{}.jpg'.format(str(cunt) + " morph gradient"), img)
+    #cv.imwrite('STOPfinal{}.jpg'.format(str(cunt) + " morph gradient"), img)
 
-    cv.waitKey()
+    #cv.waitKey()
 
 def linijka(name, a, b):
     src = cv.imread(name)
+    img1 = np.copy(src)
     src = cv.resize(src, (500, 500))
     gray = cv.cvtColor(src, cv.COLOR_BGR2GRAY)
     gray = cv.medianBlur(gray, 5)
-    _, gray = cv.threshold(gray, 90, 255, cv.THRESH_BINARY)
-    kernel = np.ones((3, 3), np.uint8)
+    _, gray = cv.threshold(gray, 80, 255, cv.THRESH_BINARY)
+    kernel = np.ones((5, 5), np.uint8)
     gray = cv.dilate(gray, kernel, iterations=1)
+    img2 = np.copy(gray)
     kernel = np.ones((8,8), np.uint8)
     gray = cv.morphologyEx(gray, cv.MORPH_CLOSE, kernel)
+    img3 = np.copy(gray)
     cv.imshow('l', gray)
     cv.waitKey()
     dst = cv.Canny(gray, a, b)
@@ -362,20 +367,32 @@ def linijka(name, a, b):
             y0 = b * rho
             pt1 = (int(x0 + 1000 * (-b)), int(y0 + 1000 * (a)))
             pt2 = (int(x0 - 1000 * (-b)), int(y0 - 1000 * (a)))
-            avg, var, rozniceavg, dista = linepoints(src, lines[i], gray)
-            # print(dista)
-            # if math.sqrt(var) > 3 and dista < 275:
             cv.line(src, pt1, pt2, (0, 0, 255), 2)
     cv.imshow('l', src)
     cv.waitKey()
 
 cunt = 0
 
-#plik = 'zdj/inZdjjj{}.jpg'.format(i)
+plik = 'zdj/a1.jpg'
 
-for DDD in range(46,48):
+#linijka(plik, 90, 200)
+
+
+
+#linijka(plik, 90, 200)
+zdj, angle = lines(plik, 200, 90)
+lefttop, righttop, leftdown, rightdown = corners2(zdj, plik, angle)
+
+#circless = circles2(plik)
+if circless is False:
+    cunt += 1
+final(plik, circless, lefttop, righttop, leftdown, rightdown)
+
+'''
+for DDD in [5, 6, 8, 9, 11, 23, 24, 25, 26, 27,
+            33, 34, 36, 42, 43]:
     cunt = DDD
-    plik = 'zdj/inZdjjj{}.jpg'.format(DDD)
+    plik = 'zdj/a{}.jpg'.format(DDD)
     print('ZDJ numero : ', DDD, '  :', plik, "<<<<<==================================================")
     zdj, angle = lines(plik, 50, 40)
     lefttop, righttop, leftdown, rightdown = corners2(zdj, plik, angle)
@@ -387,6 +404,8 @@ for DDD in range(46,48):
     final(plik, circless, lefttop, righttop, leftdown, rightdown)
 
     cunt+=1
+
 cv.waitKey()
+'''
 
 
